@@ -44,7 +44,7 @@ const eventSchema=new Schema({
     },
     status:{
         type:String,
-        enum:["DRAFT"," PUBLISHED","SOLD_OUT","COMPLETED"]
+        enum:["DRAFT","PUBLISHED","SOLD_OUT","COMPLETED"]
     },
     organiserId:{
         type:Schema.Types.ObjectId,

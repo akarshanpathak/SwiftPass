@@ -1,18 +1,26 @@
 const errorMiddleware=(err,req,res,next)=>{
 
-    err.statusCode=err.statusCode || 500;
-    err.message=err.message || "Internal server error"
+    let statusCode=500;
+    let message= "Internal server error"
 
-    if (err.name === "CastError") {
-        err.message = `Resource not found. Invalid: ${err.path}`;
-        err.statusCode = 400;
+    if(typeof err ==="object"){
+        statusCode=err.statusCode || 500;
+        message=err.message || "Internal server Error"
+
+        if (err.name === "CastError") {
+            message = `Resource not found. Invalid: ${err.path}`;
+            statusCode = 400;
+        }
+    }
+    else if(typeof err ==="string"){
+        message=err;
     }
 
-    res.status(err.statusCode).json({
-        success:false,
-        message:err.message,
-        stack: process.env.NODE_ENV === "development" ? err.stack : null,
-    })
+    res.status(statusCode).json({
+        success: false,
+        message: message,
+        stack: process.env.NODE_ENV === "development" && typeof err === "object" ? err.stack : null,
+    });
 }
 
 export default errorMiddleware;

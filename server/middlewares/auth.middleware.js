@@ -27,11 +27,11 @@ export const protect=async (req,res,next)=>{
 export const authoriseOrganizer=async(req,res,next)=>{
     try {
 
-       if(req.user && req.user.role==="ORGANIZER"){
+       if(req.user && (req.user.role==="organizer" || req.user.role==="admin")){
             next();
        }
        else{
-            res.status(403).json({ message: "Only organizers can perform this action" });
+            res.status(403).json({ message: "Only organizers can perform this action",success:false });
        }
 
     } catch (error) {
