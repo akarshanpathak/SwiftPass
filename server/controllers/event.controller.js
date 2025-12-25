@@ -108,3 +108,23 @@ export const getEventById = asyncHandler(async (req, res, next) => {
    
     res.status(200).json({message:"Event fetched Successfully",success:true,data:event})
 });
+
+export const getAllEventForUser=asyncHandler(async(req,res)=>{
+    const userId = req.user._id
+
+    if(!mongoose.Types.ObjectId.isValid(userId)){
+      throw new ApiError(400,"Invalid User ID format")
+    }
+
+    const events=await Event.find({organiserId:userId})
+
+    if(events.length===0){
+      return res.status(200).json({
+            success: true,
+            message: "No events found for this user",
+            data: []
+      });
+    }
+
+    res.status(200).json({message:"Event fetched Successfully",Length:events.length,success:true,data:events})
+})
