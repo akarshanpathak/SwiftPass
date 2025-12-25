@@ -13,6 +13,10 @@ const eventSchema=new Schema({
         type:String,
         default:"https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8ZXZlbnR8ZW58MHx8MHx8fDA%3D"
     },
+    bannerImagePublicId:{
+        type:String,
+        required:true
+    },
     type:{
         type:String,
         enum:["OFFLINE","ONLINE"],
@@ -40,7 +44,8 @@ const eventSchema=new Schema({
     },
     ticketSold:{
         type:Number,
-        default:0
+        default:0,
+        immutable:true
     },
     status:{
         type:String,
@@ -50,7 +55,8 @@ const eventSchema=new Schema({
     organiserId:{
         type:Schema.Types.ObjectId,
         ref:"User",
-        required:true
+        required:true,
+        immutable:true
     }
 },
     {
