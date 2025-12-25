@@ -154,7 +154,7 @@ export const updateEventsDetail=asyncHandler(async (req,res)=>{
 
     if(req.file){
       const publicId=event.bannerImagePublicId;
-      await deleteImageFromClodinary(publicId)
+      await deleteImageFromCloudinary(publicId)
       updates.bannerImage=req.file.path
       updates.bannerImagePublicId=req.file.filename
     }
