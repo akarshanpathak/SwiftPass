@@ -6,6 +6,8 @@ import userRouter from "./routes/user.route.js"
 import eventRouter from "./routes/event.route.js"
 import errorMiddleware from "./middlewares/error.middleware.js"
 import cookieParser from "cookie-parser"
+import paymentRouter from "./routes/payment.route.js"
+
 dotenv.config()
 
 const app=express()
@@ -19,6 +21,7 @@ app.use(cookieParser())
 //Routes
 app.use("/api/v1/user",userRouter)
 app.use("/api/v1/event",eventRouter)
+app.use("/api/v1/payments",paymentRouter)
 
 
 app.use(errorMiddleware)
