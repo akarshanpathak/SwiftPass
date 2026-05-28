@@ -5,40 +5,77 @@ import mongoose from "mongoose";
 import { deleteImageFromCloudinary } from "../config/cloudinary.js";
 
 export const createEvent = asyncHandler(async (req, res, next) => {
+  console.log("in create event server side");
+  console.log("1");
+  
+  
   const {
     title,
     description,
     type,
-    location,
     startDate,
     endDate,
     price,
     capacity,
+    platform,
+    location,
+    city,
+    meetingLink,
+    coordinates,
+    category
   } = req.body;
+  console.log("2");
+
+
+  if(type === "OFFLINE" && (!location || !city || !coordinates)){
+  console.log("3");
+
+      throw new ApiError(400 , "please provide valid location")
+  }
+  console.log("4");
+
+  if(type === "ONLINE" && (!platform || !meetingLink)){
+    console.log(platform , meetingLink);
+    
+    throw new ApiError(400 , "please provide valid platform and meeting link")
+  }
+  console.log("5");
 
   if (
     !title ||
     !description ||
-    !location ||
     !startDate ||
     !endDate ||
     !price ||
-    !capacity
+    !capacity 
   ) {
+    console.log("6");
+    console.log(title);
+    console.log(description);
+    console.log(startDate);
+    console.log(endDate);
+    console.log(price);
+    console.log(capacity);
+    
     throw new ApiError(400, "Please Provide all required feilds");
   }
+  console.log("7");
 
   if (!req.file) {
+    console.log("re.file" , req.file);
+    console.log("3");
     throw new ApiError(400, "Banner image is required");
   }
-
-  console.log(req.file);
-
+  console.log("3");
+  // console.log(req.file);
+  console.log("3");
   if (price === undefined) {
+    console.log("3");
     throw new ApiError(400, "Price is required");
   }
-
+console.log("3");
   if (price < 0) {
+    console.log("3");
     throw new ApiError(400, "Price cannot be negative");
   }
 
@@ -58,18 +95,24 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Capacity must be at least 1");
   }
 
+  // city = city.toLowerCase();
   const newEvent = new Event({
     title,
     description,
     bannerImage: req.file.path,
-    bannerImagePublicId:req.file.filename,
+    bannerImagePublicId: req.file.filename,
     type,
     price,
     location,
     capacity,
     startDate,
     endDate,
+    platform,
+    category,
+    meetingLink,
+    coordinates,
     organiserId: req.user._id,
+    city: city.toLowerCase(),
   });
 
   await newEvent.save();
@@ -80,7 +123,12 @@ export const createEvent = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllEvent = asyncHandler(async (req, res, next) => {
-  const events = await Event.find({ status: "PUBLISHED" })
+  const events = await Event.find({
+    status: "PUBLISHED",
+    date: {
+      $gte: new Date()
+    }
+  })
     .populate("organiserId", "name avatar")
     .sort({ startDate: 1 });
 
@@ -93,158 +141,319 @@ export const getAllEvent = asyncHandler(async (req, res, next) => {
 });
 
 export const getEventById = asyncHandler(async (req, res, next) => {
-    const id = req.params.eventId;
+  const id = req.params.eventId;
 
-    if(!mongoose.Types.ObjectId.isValid(id)){
-        throw new ApiError(400, "Invalid Event ID format");
-    }
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Event ID format");
+  }
 
-    const event = await Event.findById(id).populate(
-        "organiserId",
-        "name avatar"
-    );
+  const event = await Event.findById(id).populate("organiserId", "name avatar");
 
-    if(!event){
-        throw new ApiError(404,"Event not found")
-    }
-   
-    res.status(200).json({message:"Event fetched Successfully",success:true,data:event})
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  res
+    .status(200)
+    .json({
+      message: "Event fetched Successfully",
+      success: true,
+      data: event,
+    });
 });
 
-export const getAllEventForUser=asyncHandler(async(req,res)=>{
-    const userId = req.user._id
+export const getAllEventForUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
 
-    if(!mongoose.Types.ObjectId.isValid(userId)){
-      throw new ApiError(400,"Invalid User ID format")
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid User ID format");
+  }
+
+  const events = await Event.find({ organiserId: userId });
+
+  if (events.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: "No events found for this user",
+      data: [],
+    });
+  }
+
+  res
+    .status(200)
+    .json({
+      message: "Event fetched Successfully",
+      Length: events.length,
+      success: true,
+      data: events,
+    });
+});
+
+export const updateEventsDetail = asyncHandler(async (req, res) => {
+  const eventId = req.params.eventId;
+
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    throw new ApiError(400, "Invalid Event ID format");
+  }
+
+  const event = await Event.findById(eventId);
+
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  const userId = req.user._id;
+
+  if (userId.toString() !== event.organiserId.toString()) {
+    throw new ApiError(
+      400,
+      "You are only allowed to update events created by you.",
+    );
+  }
+
+  const updates = req.body;
+
+  if (req.file) {
+    const publicId = event.bannerImagePublicId;
+    await deleteImageFromCloudinary(publicId);
+    updates.bannerImage = req.file.path;
+    updates.bannerImagePublicId = req.file.filename;
+  }
+
+  if (updates.price && event.ticketSold > 0) {
+    throw new ApiError(
+      400,
+      `You are not allowed to change price as ${event.ticketSold} tickets have already sold`,
+    );
+  }
+
+  if (updates.capacity && updates.capacity < event.ticketSold) {
+    throw new ApiError(400, "Capacity can't be less than sold tickets");
+  }
+
+  const currDate = new Date();
+
+  const checkStart = updates.startDate
+    ? new Date(updates.startDate)
+    : new Date(event.startDate);
+  const checkEnd = updates.endDate
+    ? new Date(updates.endDate)
+    : new Date(event.endDate);
+
+  if (updates.startDate && checkStart < currDate) {
+    throw new ApiError(400, "Start date cannot be in the past");
+  }
+
+  if (checkEnd <= checkStart) {
+    throw new ApiError(400, "End date must be after the Start date");
+  }
+
+  const restrictedFields = ["_id", "organiserId", "ticketSold"];
+
+  restrictedFields.forEach((feild) => delete updates[feild]);
+
+  const updatedEvent = await Event.findByIdAndUpdate(
+    eventId,
+    { $set: updates },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  res
+    .status(200)
+    .json({
+      message: "Event details have been updated successfully",
+      success: true,
+      data: updatedEvent,
+    });
+});
+
+export const changeEventStatus = asyncHandler(async (req, res) => {
+  const eventId = req.params.eventId;
+
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    throw new ApiError(400, "Invalid Event ID format");
+  }
+
+  const event = await Event.findById(eventId);
+
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
+  const userId = req.user._id;
+
+  if (userId.toString() !== event.organiserId.toString()) {
+    throw new ApiError(
+      400,
+      "You are only allowed to update events created by you.",
+    );
+  }
+
+  const { status } = req.body;
+
+  if (!status) {
+    throw new ApiError(400, "Status is required");
+  }
+
+  const validStatuses = ["DRAFT", "PUBLISHED", "SOLD_OUT", "COMPLETED"];
+
+  if (!validStatuses.includes(status.toUpperCase())) {
+    throw new ApiError(400, "Invalid status value");
+  }
+
+  if (status.toUpperCase() === "PUBLISHED") {
+    if (!event.bannerImage) {
+      throw new ApiError(
+        400,
+        "Cannot publish event without a banner image and location",
+      );
     }
+  }
 
-    const events=await Event.find({organiserId:userId})
+  if (event.status === "COMPLETED" && status.toUpperCase() !== "COMPLETED") {
+    throw new ApiError(
+      400,
+      "Cannot change status of an event that has already ended.",
+    );
+  }
 
-    if(events.length===0){
-      return res.status(200).json({
-            success: true,
-            message: "No events found for this user",
-            data: []
-      });
-    }
+  event.status = status.toUpperCase();
+  await event.save();
 
-    res.status(200).json({message:"Event fetched Successfully",Length:events.length,success:true,data:events})
-})
+  res.status(200).json({
+    success: true,
+    message: `Event status updated to ${event.status}`,
+    data: { status: event.status, event },
+  });
+});
 
-export const updateEventsDetail=asyncHandler(async (req,res)=>{
-    const eventId=req.params.eventId;
-
-    if(!mongoose.Types.ObjectId.isValid(eventId)){
-      throw new ApiError(400, "Invalid Event ID format");
-    }
-
-    const event=await Event.findById(eventId);
-    
-    if(!event){
-      throw new ApiError(404,"Event not found")
-    }
-    
-    const userId=req.user._id;
-
-    if(userId.toString()!== event.organiserId.toString()){
-      throw new ApiError(400, "You are only allowed to update events created by you.");
-    }
-
-    const updates=req.body
-
-    if(req.file){
-      const publicId=event.bannerImagePublicId;
-      await deleteImageFromCloudinary(publicId)
-      updates.bannerImage=req.file.path
-      updates.bannerImagePublicId=req.file.filename
-    }
-
-    if(updates.price && event.ticketSold>0){
-        throw new ApiError(400, `You are not allowed to change price as ${event.ticketSold} tickets have already sold`);
-    }
-
-    if(updates.capacity  && updates.capacity<event.ticketSold){
-      throw new ApiError(400, "Capacity can't be less than sold tickets");
-    }
-    
-     const currDate = new Date();
-    
-    const checkStart = updates.startDate ? new Date(updates.startDate) : new Date(event.startDate);
-    const checkEnd = updates.endDate ? new Date(updates.endDate) : new Date(event.endDate);
-
-    if (updates.startDate && checkStart < currDate) {
-        throw new ApiError(400, "Start date cannot be in the past");
-    }
-    
-    if (checkEnd <= checkStart) {
-        throw new ApiError(400, "End date must be after the Start date");
-    }
-    
-    const restrictedFields = ["_id", "organiserId", "ticketSold"];
-
-    restrictedFields.forEach(feild => delete updates[feild])
-   
-    const updatedEvent=await Event.findByIdAndUpdate(eventId,
-      {$set:updates},
-      {
-        new:true,
-        runValidators:true
+export const getAllForLocation = asyncHandler(async (req, res, next) => {
+  const { location } = req.query;
+  if (!location) {
+    throw new ApiError(400, "Location is required");
+  }
+  const events = await Event.find(
+    {
+      location,
+      date: {
+        $gte: new Date()
       }
-    )
-    
-    res.status(200).json({ message:"Event details have been updated successfully",success: true, data: updatedEvent });
+    }
+  );
+  if (events.length <= 0) {
+    res.status(200).json({ message: "No event found for this location" });
+    return;
+  }
+
+  res
+    .status(200)
+    .json({ message: "Event found for this location", data: events });
+});
+
+export const onlineEvent = asyncHandler(async (req, res, next) => {
+  const events = await Event.find({ type: "ONLINE" });
+  if (events.length <= 0) {
+    res.status(200).json({ message: "No event found" });
+    return;
+  }
+
+  res.status(200).json({ message: "Event found", data: events });
+});
+
+export const recentEvent = asyncHandler(async (req, res, next) => {
+  const events = await Event.find().sort({ createdAt: -1 }).limit(9);
+  if (events.length <= 0) {
+    res.status(200).json({ message: "No event found" });
+    return;
+  }
+
+  res.status(200).json({ message: "Event found", data: events });
+});
+
+export const todaysEvent = asyncHandler(async (req, res, next) => {
+  const { location } = req.query;
+  if (!location) {
+    throw new ApiError(400, "Add location to fetch todays event");
+  }
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const events = await Event.find({
+    startDate: {
+      $gte: startOfDay,
+      $lte: endOfDay
+    }, city: location.toLowerCase()
+  })
+
+  console.log(events);
+
+  if (events.length > 0) {
+    res.status(201).json({ events, message: "Event find successfully" })
+  }
+  else {
+    res.status(201).json({ events, message: "No event found" })
+  }
+
+});
+
+export const thisWeekend = asyncHandler(async (req, res, next) => {
+  const { location } = req.query
+
+  if (!location) {
+    throw new ApiError(400, "Add location to fetch event");
+  }
+
+  const startOfWeekend = new Date();
+  const dateDiff = (6 - startOfWeekend.getDate() + 7) % 7;
+  startOfWeekend.setDate(new Date().getDate + dateDiff);
+  startOfWeekend.setHours(0, 0, 0, 0);
+
+  const endOfWeekend = new Date();
+  endOfWeekend.setDate(startOfWeekend.getDate() + 1);
+  startOfWeekend.setHours(23, 59, 59, 999);
+
+  const event = await Event.find({
+    location: { $regex: location, $options: "i" },
+    date: {
+      $gte: startOfWeekend,
+      $lte: endOfWeekend
+    }
+  })
+
+
+  if (event.length <= 0) {
+    return res.status(201).json({ message: "No event found for this location", success: true })
+  }
+
+  res.status(201).json({ message: "Event found for this location", success: true, event })
+  return;
 })
-
-export const changeEventStatus=asyncHandler(async(req,res)=>{
-    const eventId=req.params.eventId 
-    
-   if(!mongoose.Types.ObjectId.isValid(eventId)){
-        throw new ApiError(400, "Invalid Event ID format");
-    }
-     
-    const event=await Event.findById(eventId);
-    
-    if(!event){
-      throw new ApiError(404,"Event not found")
-    }
-
-    const userId=req.user._id
-
-    if(userId.toString()!== event.organiserId.toString()){
-      throw new ApiError(400, "You are only allowed to update events created by you.");
-    }
-
-    const {status}=req.body
-
-    if(!status){
-      throw new ApiError(400, "Status is required");
-    }
-    
-    const validStatuses = ["DRAFT", "PUBLISHED", "SOLD_OUT", "COMPLETED"];
-     
-    if(!validStatuses.includes(status.toUpperCase())){
-      throw new ApiError(400, "Invalid status value");
-    }
-
-    if (status.toUpperCase() === "PUBLISHED") {
-        if (!event.bannerImage) {
-            throw new ApiError(400, "Cannot publish event without a banner image and location");
-        }
-    }
-    
-    if (event.status === "COMPLETED" && status.toUpperCase() !== "COMPLETED") {
-        throw new ApiError(400, "Cannot change status of an event that has already ended.");
-    }
-    
-
-    event.status=status.toUpperCase();
-    await event.save()
-
-   res.status(200).json({
-        success: true,
-        message: `Event status updated to ${event.status}`,
-        data: { status: event.status,event }
-   });
-})
-
 // add delete Event route
+
+
+export const searchLocation = asyncHandler(async (req, res, next) => {
+  const { query } = req.query
+
+  if (!query) {
+    throw new ApiError(404, "All feilds are required")
+  }
+
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1 `,
+    {
+      headers: {
+        "User-Agent": "EventPlatform/1.0"
+      }
+    }
+  );
+
+  const data = await response.json();
+
+  res.json(data);
+})

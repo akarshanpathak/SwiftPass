@@ -23,8 +23,14 @@ const userSchema=new Schema({
     },
     avatar:{
         type:String,
-        default:"https://cdn.vectorstock.com/i/1000v/66/13/default-avatar-profile-icon-social-media-user-vector-49816613.jpg",
+        default:"https://img.magnific.com/free-vector/blue-circle-with-white-user_78370-4707.jpg",
     },
+    wishlist :[
+        {
+            type : Schema.Types.ObjectId,
+            ref : "Event"
+        }
+    ]
     
 },
     {

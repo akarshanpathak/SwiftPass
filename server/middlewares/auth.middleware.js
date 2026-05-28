@@ -2,7 +2,8 @@ import  jwt  from "jsonwebtoken"
 import {User} from "../models/user.schema.js"
 
 export const protect=async (req,res,next)=>{
-
+    console.log("in protect server side");
+    
     try {
         const token=req.cookies["access-token"];
     
@@ -25,12 +26,15 @@ export const protect=async (req,res,next)=>{
 
 
 export const authoriseOrganizer=async(req,res,next)=>{
+    console.log("in authoriseOrganizer server side");
     try {
 
        if(req.user && (req.user.role==="organizer" || req.user.role==="admin")){
             next();
        }
        else{
+             console.log("in authoriseOrganizer server side else block");
+            
             res.status(403).json({ message: "Only organizers can perform this action",success:false });
        }
 

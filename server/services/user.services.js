@@ -25,7 +25,7 @@ export const register = async (name, email, password) => {
     const userResponse = newUser.toObject();
     delete userResponse.password;
 
-    return { user: userResponse, token };
+    return { userResponse, token };
 };
 
 export const login = async (email, password) => {
