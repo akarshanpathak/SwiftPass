@@ -457,3 +457,20 @@ export const searchLocation = asyncHandler(async (req, res, next) => {
 
   res.json(data);
 })
+
+export const totalNumberOfEventOrganisedByUser = asyncHandler(async(req , res, next) =>{
+  const userId = req.user._id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid User ID format");
+  }
+
+  const events = await Event.find({ organiserId: userId });
+  res
+    .status(200)
+    .json({
+      message: "Event fetched Successfully",
+      eventCount: events.length,
+      success: true,
+    });
+})

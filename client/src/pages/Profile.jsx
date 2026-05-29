@@ -20,17 +20,71 @@ import Tickets from '../components/Tickets';
 import { useDispatch } from 'react-redux';
 import { logOutUser } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
+import { totalFollowerFollowingCount } from '../services/user.services';
+import { useEffect } from 'react';
+import { totalNumberOfEventOrganisedByUser } from '../services/event.services';
+
 
 function Profile() {
 
   const currrentuser = getUser();
   const [tab, setTab] = useState(null);
+  const [followerCount , setFollowerCount] = useState(0);
+  const [followingCount , setFollowingCount] = useState(0);
+  const [eventCount , setEventCount] = useState(0);
+
   const dispatch = useDispatch()
   const navigate = useNavigate()
+
 
   if (!currrentuser) {
     return null;
   }
+
+  // fecth follower/following length
+
+  useEffect(()=>{
+    const fetchFollowerFollowingLength = async ()=>{
+      try {
+        const response = await totalFollowerFollowingCount()
+        const data = response.data;
+
+        if(data.success){
+          setFollowerCount(data.followersCount)
+          setFollowingCount(data.followingCount)
+        }
+        // console.log("Profile" , response.datafollowingCount );
+      } catch (error) {
+        console.log("Error from profile useeffec " , error);
+        
+      }
+      
+    }
+
+    if(currrentuser){
+      fetchFollowerFollowingLength()
+    }
+  } , [currrentuser])
+
+  // fetch total number of event hosted by user
+
+  useEffect(()=>{
+    const fetchNumberOfEvent = async ()=>{
+      try {
+        const response = await totalNumberOfEventOrganisedByUser()
+        const data = response.data;
+        console.log("data from totalNumberOfEventOrganisedByUser " , data);
+        setEventCount(data.eventCount)
+        
+      } catch (error) {
+        console.log("Error from useeffect total number of event hosted by user " , error);
+      }
+    }
+
+    if(currrentuser){
+      fetchNumberOfEvent()
+    }
+  } , [currrentuser])
 
   const handleLogout = () =>{
     dispatch(logOutUser())
@@ -122,7 +176,7 @@ function Profile() {
                   <div className='text-center md:text-left'>
 
                     <h1 className='text-3xl sm:text-4xl font-bold text-gray-800 font-poppins tracking-wide'>
-                      {currrentuser.name.charAt(0).toUpperCase() + currrentuser.name.slice(1)} Pathak
+                      {currrentuser.name.charAt(0).toUpperCase() + currrentuser.name.slice(1)}
                     </h1>
 
                     <p className='text-gray-500 mt-2 text-sm sm:text-base'>
@@ -136,7 +190,7 @@ function Profile() {
 
                     <div className='bg-white shadow-md rounded-2xl px-6 py-4 text-center min-w-[110px] hover:-translate-y-1 duration-300'>
 
-                      <p className='text-2xl font-bold text-green-600'>2</p>
+                      <p className='text-2xl font-bold text-green-600'>{eventCount || 0}</p>
 
                       <p className='text-gray-500 text-sm mt-1'>
                         Events
@@ -146,7 +200,7 @@ function Profile() {
 
                     <div className='bg-white shadow-md rounded-2xl px-6 py-4 text-center min-w-[110px] hover:-translate-y-1 duration-300'>
 
-                      <p className='text-2xl font-bold text-green-600'>20</p>
+                      <p className='text-2xl font-bold text-green-600'>{followerCount}</p>
 
                       <p className='text-gray-500 text-sm mt-1'>
                         Followers
@@ -156,7 +210,7 @@ function Profile() {
 
                     <div className='bg-white shadow-md rounded-2xl px-6 py-4 text-center min-w-[110px] hover:-translate-y-1 duration-300'>
 
-                      <p className='text-2xl font-bold text-green-600'>7</p>
+                      <p className='text-2xl font-bold text-green-600'>{followingCount}</p>
 
                       <p className='text-gray-500 text-sm mt-1'>
                         Following

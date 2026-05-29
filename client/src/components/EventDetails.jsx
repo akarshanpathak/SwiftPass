@@ -9,42 +9,48 @@ import {
   MapPin,
   Share2,
   ExternalLink,
+  CheckCircle2,
 } from "lucide-react";
 
 import toast from "react-hot-toast";
 
 import { getEventById } from "../services/event.services";
-import {
-  createOrder,
-  verifyPayment,
-} from "../services/payment.services";
-
+import { createOrder, verifyPayment } from "../services/payment.services";
 import { getUser } from "../utils/auth";
-import { updateWishlist } from "../services/user.services";
-// import toast from "react-hot-toast";
+import { isFollowing, isInWishList, updateFollowers, updateFollowing , updateWishlist } from "../services/user.services";
 
 function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [liked, setLiked] = useState(false);
   const [readMore, setReadMore] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [organiserId, setOrganiserId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [follows, setFollows] = useState(false);
+  const [eventId, setEventId] = useState(null)
 
   const user = getUser();
 
-  // ================= FETCH EVENT =================
 
+
+  // FETCH EVENT 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-
         const res = await getEventById(id);
-
         setData(res.data.data);
+        setEventId(res.data.data._id);
+
+        setOrganiserId(res.data.data.organiserId._id)
+        console.log("organiserid ", res.data.data.organiserId._id);
+        
+        setUserId(user._id)
+        console.log("user id " , user._id);
+        
       } catch (error) {
         console.log(error);
       } finally {
@@ -57,91 +63,106 @@ function EventDetails() {
     }
   }, [id]);
 
-  // ================= LOADING =================
+  //check if already in wishlist
+  useEffect(() => {
+    const check = async (eventId) => {
+      try {
+        const response = await isInWishList(eventId)
+        setLiked(response.data.inWishlist)
+      } catch (error) {
+        console.log("error from is in Wishlist useeffect", error);
+      }
+    }
+
+    if (eventId) {
+      check(eventId)
+    }
+  }, [eventId])
+
+  //check if already follows
+  useEffect( ()=>{
+      const check = async (organiserId) =>{
+      try {
+        const response = await isFollowing(organiserId)
+        console.log("check if already follows runninf" , response);
+        
+        setFollows(response.data.following)
+      } catch (error) {
+        console.log("error from isfollowing useeffect" , error);
+      }
+    }
+
+    if(organiserId){
+      check(organiserId)
+    }
+  } , [organiserId])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-lg font-semibold">
+      <div className="min-h-screen flex justify-center items-center text-sm font-medium tracking-wide text-gray-500">
         Loading Event...
       </div>
     );
   }
 
-  // ================= NOT FOUND =================
-
   if (!data) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-xl font-semibold">
+      <div className="min-h-screen flex justify-center items-center text-lg font-medium text-gray-900">
         Event Not Found
       </div>
     );
   }
 
-  // ================= EVENT STATUS =================
-
   const ticketsLeft = data.capacity - data.ticketSold;
-
-  const soldPercentage =
-    data.capacity > 0
-      ? (data.ticketSold / data.capacity) * 100
-      : 0;
+  const soldPercentage = data.capacity > 0 ? (data.ticketSold / data.capacity) * 100 : 0;
 
   let status = "Available";
-
   if (ticketsLeft <= 0) {
     status = "Sold Out";
   } else if (soldPercentage >= 80) {
     status = "Few Left";
   }
 
-  // ================= DATE =================
-
-  const formattedDate = new Date(
-    data.startDate
-  ).toLocaleDateString("en-IN", {
+  const formattedDate = new Date(data.startDate).toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 
-  const startTime = new Date(
-    data.startDate
-  ).toLocaleTimeString("en-IN", {
+  const startTime = new Date(data.startDate).toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  const endTime = new Date(
-    data.endDate
-  ).toLocaleTimeString("en-IN", {
+  const endTime = new Date(data.endDate).toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  // ================= MEETING LINK =================
-
-  const meetingLink = data?.meetingLink?.startsWith(
-    "http"
-  )
+  const meetingLink = data?.meetingLink?.startsWith("http")
     ? data.meetingLink
     : `https://${data.meetingLink}`;
 
-
-  const shareEvent = async ()=>{
-    if(navigator.share){
-      navigator.share({
-        text : "hello"
-      })
+  const shareEvent = async () => {
+    if (navigator.share) {
+      try {
+        setSharing(true);
+        await navigator.share({ text: `Check out this event: ${data.title}`, url: window.location.href });
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setSharing(false);
+      }
+    } else {
+      toast.success("Link copied to clipboard!");
     }
-  }
+  };
 
   // ================= PAYMENT =================
-
   const handlePayment = async () => {
     try {
       const res = await createOrder(data._id);
-
       const orderData = res.data;
 
       const options = {
@@ -154,521 +175,271 @@ function EventDetails() {
 
         handler: async (response) => {
           try {
-            const toastId = toast.loading(
-              "Verifying payment..."
-            );
-
-            const verificationResponse =
-              await verifyPayment(response, data);
+            const toastId = toast.loading("Verifying payment...");
+            const verificationResponse = await verifyPayment(response, data);
 
             if (verificationResponse.success) {
-              toast.success(
-                "Ticket Purchased Successfully!",
-                {
-                  id: toastId,
-                }
-              );
-
+              toast.success("Ticket Purchased Successfully!", { id: toastId });
               navigate("/payment-success", {
-                state: {
-                  ticket: verificationResponse.data,
-                },
+                state: { ticket: verificationResponse.data },
               });
             }
           } catch (error) {
-            toast.error(
-              "Payment verification failed."
-            );
-
+            toast.error("Payment verification failed.");
             console.log(error);
           }
         },
-
         prefill: {
           name: user?.name,
           email: user?.email,
         },
-
         theme: {
           color: "#000000",
         },
       };
 
       const rzp = new window.Razorpay(options);
-
       rzp.open();
     } catch (error) {
       toast.error(error.message);
-
       console.log(error);
     }
   };
 
   const handleWishlist = async (eventId) => {
-
     try {
-      const response = await updateWishlist(eventId)
-      console.log(response);
-      toast.success(response.data.message)
+      const response = await updateWishlist(eventId);
+      toast.success(response.data.message);
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
       console.log(error);
+    }
+  };
+
+  const handleFollowerFollowing = async () => {
+    try {
+      const responseFollower = await updateFollowers(organiserId);
+      const responseFollowing = await updateFollowing(organiserId)
+      
+      console.log(responseFollower);
+      console.log(responseFollowing);
+      
+      setFollows((prev) => !prev)
+    } catch (error) {
+      console.log("Error from handleFollowerFollowing " , error);
+      
     }
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28">
+    <div className="min-h-screen bg-white pb-32 font-sans antialiased">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
 
-      {/* ================= CONTAINER ================= */}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5">
-
-        {/* ================= HERO ================= */}
-
-        <div className="relative h-[300px] sm:h-[420px] lg:h-[500px] rounded-3xl overflow-hidden">
-
+        {/* ================= HERO (IMAGE UNTOUCHED) ================= */}
+        <div className="relative h-[300px] sm:h-[420px] lg:h-[500px] rounded-3xl overflow-hidden shadow-sm">
           <img
             src={data.bannerImage}
             alt={data.title}
             className="w-full h-full object-cover"
           />
-
-          <div className="absolute inset-0 bg-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
           {/* ACTIONS */}
-
           <div className="absolute top-4 right-4 flex gap-2 z-10">
-
             <button
               onClick={shareEvent}
               disabled={sharing}
-              className="h-11 w-11 rounded-full bg-white/90 backdrop-blur flex justify-center items-center hover:bg-white transition cursor-pointer"
+              className="h-10 w-10 rounded-full bg-white text-black flex justify-center items-center hover:bg-gray-100 transition shadow-sm cursor-pointer"
             >
-              <Share2 size={18} />
+              <Share2 size={16} />
             </button>
 
             <button
               onClick={() => {
-                setLiked(!liked)
-                handleWishlist(data._id)
+                setLiked(!liked);
+                handleWishlist(data._id);
               }}
-              className={`h-11 w-11 rounded-full backdrop-blur flex justify-center items-center transition cursor-pointer
-              ${liked
-                  ? "bg-black text-white"
-                  : "bg-white/90 hover:bg-white"
+              className={`h-10 w-10 rounded-full flex justify-center items-center transition shadow-sm cursor-pointer ${liked
+                  ? "bg-pink-500"
+                  : "bg-white hover:bg-gray-100"
                 }`}
             >
               <Heart
-                size={18}
+                size={16}
                 fill={liked ? "currentColor" : "none"}
+                className={liked ? "text-white hover:scale-125 duration-150" : "text-black hover:scale-125 duration-150"}
               />
             </button>
-
           </div>
 
           {/* HERO CONTENT */}
-
-          <div className="absolute bottom-0 left-0 w-full p-5 sm:p-8 text-white">
-
-            <span className="text-xs sm:text-sm bg-white/20 backdrop-blur px-3 py-1 rounded-full">
+          <div className="absolute bottom-0 left-0 w-full p-6 sm:p-8 text-white">
+            <span className="text-xs font-medium uppercase tracking-wider bg-white/20 backdrop-blur-md px-3 py-1 rounded-md">
               {data.category}
             </span>
 
-            <h1 className="text-3xl sm:text-5xl font-bold mt-4 max-w-4xl leading-tight">
+            <h1 className="text-2xl sm:text-4xl font-bold mt-3 max-w-3xl leading-tight">
               {data.title}
             </h1>
+          </div>
+        </div>
 
-            <div className="flex flex-wrap gap-5 mt-5 text-sm text-gray-200">
+        {/* ================= VERTICAL CONTENT FLOW ================= */}
+        <div className="mt-8 space-y-10">
 
-              <span className="flex items-center gap-2">
-                <CalendarDays size={16} />
-                {formattedDate}
-              </span>
-
-              <span className="flex items-center gap-2">
-                <Clock3 size={16} />
-                {startTime} - {endTime}
-              </span>
-
-              <span className="flex items-center gap-2">
-                {data.type === "ONLINE" ? (
-                  <Globe size={16} />
-                ) : (
-                  <MapPin size={16} />
-                )}
-
+          {/* QUICK METRICS BAR */}
+          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 border-b border-gray-100 pb-6">
+            <span className="flex items-center gap-2 font-medium text-black">
+              <CalendarDays size={16} className="text-gray-400" />
+              {formattedDate}
+            </span>
+            <span className="flex items-center gap-2">
+              <Clock3 size={16} className="text-gray-400" />
+              {startTime} - {endTime}
+            </span>
+            <span className="flex items-center gap-2">
+              {data.type === "ONLINE" ? (
+                <Globe size={16} className="text-gray-400" />
+              ) : (
+                <MapPin size={16} className="text-gray-400" />
+              )}
+              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
                 {data.type}
               </span>
-
-            </div>
+            </span>
           </div>
-        </div>
 
-        {/* ================= MAIN LAYOUT ================= */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12 mt-10">
-
-          {/* ================= LEFT ================= */}
-
-          <div>
-
-            {/* ORGANIZER */}
-
-            <div className="flex items-center justify-between flex-wrap gap-4">
-
-              <div className="flex items-center gap-4">
-
-                <img
-                  src={
-                    data?.organiserId?.avatar ||
-                    "https://img.magnific.com/free-vector/blue-circle-with-white-user_78370-4707.jpg"
-                  }
-                  alt="organizer"
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-
-                <div>
-                  <p className="font-semibold text-lg">
-                    {data?.organiserId?.name}
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    Event Organizer
-                  </p>
-                </div>
-
+          {/* ORGANIZER SECTION */}
+          <div className="flex items-center justify-between border-b border-gray-100 pb-6">
+            <div className="flex items-center gap-3">
+              <img
+                src={data?.organiserId?.avatar || "https://img.magnific.com/free-vector/blue-circle-with-white-user_78370-4707.jpg"}
+                alt="organizer"
+                className="w-12 h-12 rounded-full object-cover border border-gray-100"
+              />
+              <div>
+                <p className="font-semibold text-gray-900 text-base">{data?.organiserId?.name}</p>
+                <p className="text-xs text-gray-400">Host & Organizer</p>
               </div>
-
-              <button className="border border-gray-300 px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition cursor-pointer">
-                Follow
-              </button>
-
             </div>
+            {
+              organiserId !== userId && <button onClick={handleFollowerFollowing} className="border border-black px-4 py-1.5 rounded-full text-xs font-medium hover:bg-black hover:text-white transition cursor-pointer">
+             {follows === true ? "following" : "follow"}
+            </button>
+            }
+          </div>
 
-            {/* ABOUT */}
-
-            <section className="mt-12">
-
-              <h2 className="text-2xl sm:text-3xl font-bold">
-                About this event
-              </h2>
-
-              <p
-                className={`mt-5 text-gray-600 leading-8 text-[15px]
-                ${!readMore &&
-                    data.description?.length > 250
-                    ? "line-clamp-4"
-                    : ""
-                  }`}
+          {/* ABOUT SECTION */}
+          <section>
+            <h2 className="text-xl font-bold text-gray-900 tracking-tight">About this event</h2>
+            <p className={`mt-3 text-gray-600 leading-relaxed text-[15px] ${!readMore && data.description?.length > 250 ? "line-clamp-4" : ""}`}>
+              {data.description}
+            </p>
+            {data.description?.length > 250 && (
+              <button
+                onClick={() => setReadMore(!readMore)}
+                className="mt-2 text-xs font-bold uppercase tracking-wider text-black underline underline-offset-4 cursor-pointer hover:text-gray-600"
               >
-                {data.description}
-              </p>
-
-              {data.description?.length > 250 && (
-                <button
-                  onClick={() =>
-                    setReadMore(!readMore)
-                  }
-                  className="mt-4 text-sm font-semibold underline underline-offset-4 cursor-pointer"
-                >
-                  {readMore
-                    ? "Read Less"
-                    : "Read More"}
-                </button>
-              )}
-
-            </section>
-
-            {/* EVENT DETAILS */}
-
-            <section className="mt-14">
-
-              <h2 className="text-2xl sm:text-3xl font-bold">
-                Event Details
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-
-                {/* DATE */}
-
-                <div className="rounded-2xl border border-gray-200 p-5">
-
-                  <div className="flex items-start gap-3">
-
-                    <CalendarDays size={18} />
-
-                    <div>
-
-                      <p className="font-semibold">
-                        Date & Time
-                      </p>
-
-                      <p className="text-sm text-gray-500 mt-2">
-                        {formattedDate}
-                      </p>
-
-                      <p className="text-sm text-gray-500">
-                        {startTime} - {endTime}
-                      </p>
-
-                    </div>
-                  </div>
-                </div>
-
-                {/* TYPE */}
-
-                <div className="rounded-2xl border border-gray-200 p-5">
-
-                  <div className="flex items-start gap-3">
-
-                    {data.type === "ONLINE" ? (
-                      <Globe size={18} />
-                    ) : (
-                      <MapPin size={18} />
-                    )}
-
-                    <div>
-
-                      <p className="font-semibold">
-                        {data.type === "ONLINE"
-                          ? "Online Event"
-                          : "Offline Event"}
-                      </p>
-
-                      {data.type === "ONLINE" ? (
-                        <div className="mt-2">
-
-                          <p className="text-sm text-gray-500">
-                            {data.platform}
-                          </p>
-
-                          {data.meetingLink && (
-                            <a
-                              href={meetingLink}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-sm mt-2 underline underline-offset-4"
-                            >
-                              Join Meeting
-                              <ExternalLink size={14} />
-                            </a>
-                          )}
-
-                        </div>
-                      ) : (
-                        <div className="mt-2">
-
-                          <p className="text-sm text-gray-500">
-                            {data.location ||
-                              "Venue to be announced"}
-                          </p>
-
-                          {data.city &&
-                            data.city !==
-                            "undefined" && (
-                              <p className="text-sm text-gray-500 mt-1">
-                                {data.city}
-                              </p>
-                            )}
-
-                        </div>
-                      )}
-
-                    </div>
-                  </div>
-                </div>
-
-                {/* CAPACITY */}
-
-                <div className="rounded-2xl border border-gray-200 p-5">
-
-                  <p className="text-sm text-gray-500">
-                    Capacity
-                  </p>
-
-                  <p className="text-2xl font-bold mt-2">
-                    {data.capacity}
-                  </p>
-
-                </div>
-
-                {/* TICKETS */}
-
-                <div className="rounded-2xl border border-gray-200 p-5">
-
-                  <p className="text-sm text-gray-500">
-                    Tickets Left
-                  </p>
-
-                  <p className="text-2xl font-bold mt-2">
-                    {ticketsLeft}
-                  </p>
-
-                </div>
-
-              </div>
-            </section>
-
-            {/* TAGS */}
-
-            {data.tags?.length > 0 && (
-              <section className="mt-14">
-
-                <h2 className="text-2xl sm:text-3xl font-bold">
-                  Tags
-                </h2>
-
-                <div className="flex flex-wrap gap-3 mt-5">
-
-                  {data.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 rounded-full border border-gray-200 text-sm"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-
-                </div>
-              </section>
+                {readMore ? "Read Less" : "Read More"}
+              </button>
             )}
+          </section>
 
-          </div>
+          {/* DYNAMIC METADATA GRID */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-b border-gray-100 py-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Location & Venue</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {data.type === "ONLINE" ? `Online via ${data.platform || "Platform"}` : data.location || "Venue TBA"}
+              </p>
+              {data.type === "ONLINE" && data.price === 0 && data.meetingLink && (
+                <a
+                  href={meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium underline underline-offset-2 mt-1"
+                >
+                  Join Live Session <ExternalLink size={12} />
+                </a>
+              )}
+              {!data.type === "ONLINE" && data.city && (
+                <p className="text-xs text-gray-500">{data.city}</p>
+              )}
+            </div>
 
-          {/* ================= RIGHT SIDEBAR ================= */}
-
-          <div className="hidden lg:block">
-
-            <div className="sticky top-24 rounded-3xl border border-gray-200 p-7">
-
-              <div className="flex justify-between items-start">
-
-                <div>
-
-                  <p className="text-4xl font-bold">
-                    {data.price === 0
-                      ? "Free"
-                      : `₹${data.price}`}
-                  </p>
-
-                  <p className="text-sm text-gray-500 mt-1">
-                    per ticket
-                  </p>
-
-                </div>
-
-                <span className="text-xs bg-black text-white px-3 py-1 rounded-full">
+            <div className="space-y-1 sm:border-l sm:border-gray-100 sm:pl-6">
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Availability</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-900">{ticketsLeft} spots left</p>
+                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${status === "Sold Out" ? " text-red-700" : " text-emerald-700"
+                  }`}>
                   {status}
                 </span>
-
               </div>
-
-              <div className="space-y-5 mt-10">
-
-                <div className="flex justify-between text-sm">
-
-                  <span className="text-gray-500">
-                    Tickets Sold
-                  </span>
-
-                  <span className="font-medium">
-                    {data.ticketSold}
-                  </span>
-
-                </div>
-
-                <div className="flex justify-between text-sm">
-
-                  <span className="text-gray-500">
-                    Capacity
-                  </span>
-
-                  <span className="font-medium">
-                    {data.capacity}
-                  </span>
-
-                </div>
-
-                <div className="flex justify-between text-sm">
-
-                  <span className="text-gray-500">
-                    Category
-                  </span>
-
-                  <span className="font-medium">
-                    {data.category}
-                  </span>
-
-                </div>
-
-              </div>
-
-              <button
-                onClick={handlePayment}
-                disabled={
-                  status === "Sold Out" ||
-                  data.status === "DRAFT"
-                }
-                className={`w-full mt-10 py-4 rounded-2xl font-semibold transition
-                ${status === "Sold Out" ||
-                    data.status === "DRAFT"
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-black text-white hover:opacity-90 cursor-pointer"
-                  }`}
-              >
-                {data.status === "DRAFT"
-                  ? "Event Not Published"
-                  : data.price === 0
-                    ? "Reserve Spot"
-                    : "Book Tickets"}
-              </button>
-
+              <p className="text-xs text-gray-500">Total capacity: {data.capacity} seats</p>
             </div>
-          </div>
+          </section>
+
+          {/* TAGS */}
+          {data.tags?.length > 0 && (
+            <section>
+              <div className="flex flex-wrap gap-2">
+                {data.tags.map((tag, index) => (
+                  <span key={index} className="px-3 py-1 rounded-md bg-gray-50 text-gray-600 border border-gray-100 text-xs font-medium">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* DESKTOP INTEGRATED TICKETING BLOCK */}
+          <section className="bg-gray-50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border border-gray-100">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Ticket Pricing</p>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-3xl font-bold text-gray-900">{data.price === 0 ? "Free" : `₹${data.price}`}</span>
+                {data.price > 0 && <span className="text-xs text-gray-400">/ per ticket</span>}
+              </div>
+            </div>
+
+            <button
+              onClick={handlePayment}
+              disabled={status === "Sold Out" || data.status === "DRAFT"}
+              className={`px-8 py-3.5 rounded-xl font-semibold tracking-wide text-sm transition shadow-sm sm:w-auto w-full ${status === "Sold Out" || data.status === "DRAFT"
+                ? "bg-gray-200 text-gray-800 cursor-not-allowed shadow-none"
+                : "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                }`}
+            >
+              {data.status === "DRAFT" ? "Event Not Published" : data.price === 0 ? "Reserve Spot" : "Book Passes"}
+            </button>
+          </section>
 
         </div>
       </div>
 
-      {/* ================= MOBILE BOOKING BAR ================= */}
-
-      <div className="lg:hidden fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 z-50">
-
-        <div className="flex items-center justify-between gap-4">
-
-          <div>
-
-            <p className="text-xl font-bold">
-              {data.price === 0
-                ? "Free"
-                : `₹${data.price}`}
-            </p>
-
-            <p className="text-xs text-gray-500 mt-1">
-              {ticketsLeft} spots left
-            </p>
-
-          </div>
-
-          <button
-            onClick={handlePayment}
-            disabled={
-              status === "Sold Out" ||
-              data.status === "DRAFT"
-            }
-            className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap
-            ${status === "Sold Out" ||
-                data.status === "DRAFT"
-                ? "bg-gray-200 text-gray-500"
-                : "bg-black text-white"
-              }`}
-          >
-            {data.price === 0
-              ? "Reserve Spot"
-              : "Book Now"}
-          </button>
-
+      {/* ================= MOBILE BOTTOM ACCENT BAR ================= */}
+      <div className="sm:hidden fixed bottom-0 left-0 w-full border-t border-gray-100 bg-white/95 backdrop-blur-md p-4 z-50 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-lg font-bold text-gray-900">{data.price === 0 ? "Free" : `₹${data.price}`}</p>
+          <p className="text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {ticketsLeft} spots remaining
+          </p>
         </div>
+
+        <button
+          onClick={handlePayment}
+          disabled={status === "Sold Out" || data.status === "DRAFT"}
+          className={`px-6 py-3 rounded-xl font-semibold text-xs uppercase tracking-wider ${status === "Sold Out" || data.status === "DRAFT"
+            ? "bg-gray-100 text-gray-400"
+            : "bg-green-500 text-white"
+            }`}
+        >
+          {data.price === 0 ? "Reserve" : "Book Now"}
+        </button>
       </div>
+
     </div>
   );
 }

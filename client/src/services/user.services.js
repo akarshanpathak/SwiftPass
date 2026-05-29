@@ -6,3 +6,23 @@ export const getCurrentLocation=(lat,lng)=>{
 export const updateWishlist = (eventId)=>{
     return api.post(`/user/updateWishlist/${eventId}`)
 }
+
+export const updateFollowers = (userId) =>{
+    return api.post(`/user/updateFollowers/${userId}`)
+}
+
+export const updateFollowing = (userId) =>{
+    return api.post(`/user/updateFollowing/${userId}`)
+}
+
+export const isFollowing = (userId) =>{
+    return api.get(`/user/isFollowing/${userId}`)
+}
+
+export const isInWishList = (eventId) =>{
+    return api.get(`/user/isInWishList/${eventId}`)
+}
+
+export const totalFollowerFollowingCount = () =>{
+    return api.get("/user/totalFollowerFollowingCount")
+}

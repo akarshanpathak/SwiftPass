@@ -78,5 +78,7 @@ export const searchLocationForSuggesstion = async (query) => {
     return await api.get(`/event/searchLocation?query=${query}`)
 }
 
-
+export const totalNumberOfEventOrganisedByUser = () =>{
+    return api.get("/event/totalNumberOfEventOrganisedByUser")
+}
 

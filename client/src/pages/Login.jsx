@@ -30,11 +30,10 @@ import { useNavigate } from "react-router-dom";
       dispatch(loginInSuccessFull(data.data.user))
       toast.success(data.data.message)
       navigate("/")
-              
     } catch (error) {
-      dispatch(loginInFailed(data.data.message))
-      console.log(error);
-      
+      toast.error(error.response.data.message)
+      dispatch(loginInFailed("login failed"))
+      console.log(error.message , error);
     }
   }
   // console.log(formData);
@@ -61,7 +60,7 @@ import { useNavigate } from "react-router-dom";
                         <p className="text-sm text-gray-500">Password</p>
                         <input onChange={handleOnChange} id="password" className="outline-none mb-2 text-sm bg-transparent" type="password" />
                       </div>
-                      <button disabled={currentUser && currentUser.loading} type="submit" className="bg-green-700 text-white font-bold text-sm px-4  py-3 rounded-md">Login </button>
+                      <button disabled={currentUser && currentUser.loading} type="submit" className="bg-green-700 text-white font-bold text-sm px-4 hover:bg-green-800 py-3 rounded-md">Login </button>
                     </form>
                     
                     <div className="mx-auto">

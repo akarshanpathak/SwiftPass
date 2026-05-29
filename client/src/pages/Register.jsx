@@ -31,9 +31,7 @@ function Register() {
         console.log(data.data.data.userResponse);
         setLoading(false)
         toast.success("Registration successfull")
-        setInterval(()=>{
-            navigate("/")
-        },500)
+        navigate("/login")
     } catch (error) {
         setError(error.message)
         setLoading(false);
