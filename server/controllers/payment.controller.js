@@ -49,11 +49,9 @@ export const createRazorpayOrder=asyncHandler(async(req,res)=>{
 
     const order=await razorpay.orders.create(razorpayOptions)
    
-    
     if(!order){
         throw new ApiError(500, "Something went wrong while creating the Razorpay order");
     }
-    console.log("everything is perfect");
     
     res.status(200).json({
         success:true,

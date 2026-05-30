@@ -177,7 +177,8 @@ function EventDetails() {
           try {
             const toastId = toast.loading("Verifying payment...");
             const verificationResponse = await verifyPayment(response, data);
-
+            console.log("verificationResponse" , verificationResponse);
+            
             if (verificationResponse.success) {
               toast.success("Ticket Purchased Successfully!", { id: toastId });
               navigate("/payment-success", {
@@ -340,8 +341,8 @@ function EventDetails() {
                 onClick={() => setReadMore(!readMore)}
                 className="mt-2 text-xs font-bold uppercase tracking-wider text-black underline underline-offset-4 cursor-pointer hover:text-gray-600"
               >
-                {readMore ? "Read Less" : "Read More"}
-              </button>
+                {readMore ? "Read Less" : "Read More"} 
+              </button> 
             )}
           </section>
 
