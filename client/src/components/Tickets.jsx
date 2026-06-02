@@ -123,6 +123,11 @@ function Tickets() {
                                     </div>
 
                                     <button
+                                        onClick={()=>{navigate("/ticket"  , {
+                                            state : {
+                                                ticket: ticket
+                                            }
+                                        })}}
                                         disabled={isExpired} 
                                         className={`w-full mt-6 text-white py-3 rounded-xl font-semibold shadow-md transition-all duration-200 ${
                                             isExpired
