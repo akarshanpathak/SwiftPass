@@ -103,7 +103,6 @@ const eventSchema = new Schema(
         ticketSold: {
             type: Number,
             default: 0,
-            immutable: true
         },
 
         status: {

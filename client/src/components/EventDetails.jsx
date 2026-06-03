@@ -49,7 +49,7 @@ function EventDetails() {
         console.log("organiserid ", res.data.data.organiserId._id);
         
         setUserId(user._id)
-        console.log("user id " , user._id);
+        console.log("evenrt" , res.data.data);
         
       } catch (error) {
         console.log(error);
