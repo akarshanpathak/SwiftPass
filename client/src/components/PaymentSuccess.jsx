@@ -91,7 +91,7 @@ const PaymentSuccess = () => {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                     <button 
-                        onClick={() => navigate('/my-tickets')} // Change this route to your actual profile/tickets route
+                        onClick={() => navigate('/profile')} // Change this route to your actual profile/tickets route
                         className="w-full py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-md"
                     >
                         View My Tickets

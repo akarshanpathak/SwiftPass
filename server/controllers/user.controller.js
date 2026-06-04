@@ -269,3 +269,14 @@ export const totalFollowerFollowingCount = asyncHandler (async (req , res , next
   // console.log(user );
   res.json({success : true , message :"fetched successfully" ,followersCount : user.followers.length , followingCount : user.following.length})
 })
+
+export const getUserWishlist = asyncHandler(async (req , res , next) =>{
+    const userId = req.user._id 
+
+    const eventInUserWishlist = await User.findById(userId).populate("wishlist")
+
+    // console.log("eventInUserWishlist " , eventInUserWishlist.wishlist);
+
+    res.status(200).json({success : true , message : "wishlist found successfully" , wishlist:eventInUserWishlist.wishlist})
+    
+})

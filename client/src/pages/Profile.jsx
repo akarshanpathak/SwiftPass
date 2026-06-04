@@ -13,7 +13,7 @@ import {
   FaLinkedin
 } from "react-icons/fa";
 import { Ticket } from 'lucide-react';
-import Liked from '../components/Liked';
+import Liked from '../components/Wishlist';
 import Followers from '../components/Followers';
 import MyEvents from '../components/MyEvents';
 import Tickets from '../components/Tickets';

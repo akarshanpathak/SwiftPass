@@ -1,5 +1,5 @@
 import express from "express"
-import { getCurrentLocation, isFollowing, isInWishList, loginUser, registerUser , totalFollowerFollowingCount, updateFollowers, updateFollowing, updateWishlist } from "../controllers/user.controller.js";
+import { getCurrentLocation, getUserWishlist, isFollowing, isInWishList, loginUser, registerUser , totalFollowerFollowingCount, updateFollowers, updateFollowing, updateWishlist } from "../controllers/user.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
 const router=express.Router();
@@ -13,5 +13,6 @@ router.post("/updateFollowing/:userId", protect , updateFollowing)
 router.get("/isFollowing/:userId", protect , isFollowing)
 router.get("/isInWishList/:eventId", protect , isInWishList)
 router.get("/totalFollowerFollowingCount", protect , totalFollowerFollowingCount)
+router.get("/getUserWishlist", protect , getUserWishlist)
 
 export default router

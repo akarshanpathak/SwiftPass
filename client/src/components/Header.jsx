@@ -24,6 +24,10 @@ function Header() {
     navigate("/create-event")
   }
 
+  const handleWishlist = () =>{
+    navigate("/wishlist")
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm w-full">
       {/* MAIN NAVBAR */}
@@ -68,7 +72,7 @@ function Header() {
             {/* Desktop Actions - Visible from lg (1024px) up */}
             <nav className="hidden lg:flex items-center gap-6 text-gray-500">
               <Action onClick={handleCreateEvent} icon={<Plus size={20} />} label="Create" />
-              <Action icon={<Heart size={20} />} label="Wishlist" />
+              <Action onClick={handleWishlist} icon={<Heart size={20} />} label="Wishlist" />
               <Action icon={<TicketSlash size={20} />} label="Tickets" />
             </nav>
 

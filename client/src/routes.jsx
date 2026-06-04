@@ -11,6 +11,7 @@ import PaymentSuccess from './components/PaymentSuccess'
 import Profile from './pages/Profile'
 import CreateEvent from './pages/CreateEvent'
 import Ticket from './pages/Ticket'
+import Wishlist from './components/Wishlist'
 
 function routes() {
   return (
@@ -30,6 +31,7 @@ function routes() {
                   <Route path="/profile" element={<Profile/>}/>
                   <Route path="/create-event" element={<CreateEvent/>}/>
                   <Route path="/ticket" element={<Ticket/>}/>
+                  <Route path="/wishlist" element={<Wishlist/>}/>
                   
               </Route>
             </Routes>

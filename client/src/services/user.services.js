@@ -26,3 +26,7 @@ export const isInWishList = (eventId) =>{
 export const totalFollowerFollowingCount = () =>{
     return api.get("/user/totalFollowerFollowingCount")
 }
+
+export const getUserWishlist = () => {
+    return api.get("/user/getUserWishlist")
+}
