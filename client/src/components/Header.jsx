@@ -128,7 +128,7 @@ function Header() {
         <div className="lg:hidden absolute top-[112px] md:top-16 left-0 w-full bg-white border-t border-gray-100 shadow-xl animate-in slide-in-from-top duration-200">
           <div className="flex flex-col p-4 gap-4">
             <MobileNavItem onClick={handleCreateEvent} icon={<Plus />} label="Create Event" />
-            <MobileNavItem icon={<Heart />} label="Liked Events" />
+            <MobileNavItem onClick={handleWishlist} icon={<Heart />} label="Wishlist" />
             <MobileNavItem icon={<TicketSlash />} label="My Tickets" />
             <div className="h-px bg-gray-100 my-2" />
             <div onClick={()=>(navigate("/profile"))} className="flex items-center gap-3 p-2">

@@ -12,8 +12,7 @@ import {
   FaTwitter,
   FaLinkedin
 } from "react-icons/fa";
-import { Ticket } from 'lucide-react';
-import Liked from '../components/Wishlist';
+import { Ticket , User } from 'lucide-react';
 import Followers from '../components/Followers';
 import MyEvents from '../components/MyEvents';
 import Tickets from '../components/Tickets';
@@ -23,12 +22,13 @@ import { useNavigate } from 'react-router-dom';
 import { totalFollowerFollowingCount } from '../services/user.services';
 import { useEffect } from 'react';
 import { totalNumberOfEventOrganisedByUser } from '../services/event.services';
+import Wishlist from '../components/Wishlist';
 
 
 function Profile() {
 
   const currrentuser = getUser();
-  const [tab, setTab] = useState(null);
+  const [tab, setTab] = useState("profile");
   const [followerCount , setFollowerCount] = useState(0);
   const [followingCount , setFollowingCount] = useState(0);
   const [eventCount , setEventCount] = useState(0);
@@ -101,14 +101,14 @@ function Profile() {
 
         <div className='flex md:flex-col flex-row md:w-48 w-full text-gray-700 font-poppins overflow-x-auto'>
 
+          <div onClick={() =>(setTab("profile"))} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
+            <p>Profile</p>
+            <User className="text-lg" />
+          </div>
+
           <div onClick={() =>(setTab("Tickets"))} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
             <p>Tickets</p>
             <FaTicketAlt className="text-lg" />
-          </div>
-
-          <div onClick={() =>(setTab("Liked"))} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
-            <p>Liked</p>
-            <FaHeart className="text-lg" />
           </div>
 
           <div onClick={() =>(setTab("MyEvents"))} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
@@ -134,16 +134,13 @@ function Profile() {
         tab === "Tickets" && <Tickets />
       }
       {
-        tab === "Liked" && <Liked />
-      }
-      {
         tab === "Followers" && <Followers />
       }
       {
-        tab === "MyEvents" && <MyEvents />
+        tab === "MyEvents" && <MyEvents /> 
       }
       {
-        tab === null && <div className='w-full flex-1 p-4 sm:p-6 md:p-10 bg-gradient-to-br from-green-50 via-white to-green-100 min-h-screen'>
+        tab === "profile" && <div className='w-full flex-1 p-4 sm:p-6 md:p-10 bg-gradient-to-br from-green-50 via-white to-green-100 min-h-screen'>
 
           <div className='bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/40 p-6 sm:p-10'>
 
