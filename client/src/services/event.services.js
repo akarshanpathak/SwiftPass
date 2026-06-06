@@ -82,3 +82,7 @@ export const totalNumberOfEventOrganisedByUser = () =>{
     return api.get("/event/totalNumberOfEventOrganisedByUser")
 }
 
+export const getAllEventForUser = () =>{
+    return api.get("/event/getAllEventForUser")
+}
+
