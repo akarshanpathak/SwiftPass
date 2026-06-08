@@ -23,6 +23,7 @@ import { totalFollowerFollowingCount } from '../services/user.services';
 import { useEffect } from 'react';
 import { totalNumberOfEventOrganisedByUser } from '../services/event.services';
 import Wishlist from '../components/Wishlist';
+import Following from '../components/Following';
 
 
 function Profile() {
@@ -73,7 +74,7 @@ function Profile() {
       try {
         const response = await totalNumberOfEventOrganisedByUser()
         const data = response.data;
-        console.log("data from totalNumberOfEventOrganisedByUser " , data);
+        // console.log("data from totalNumberOfEventOrganisedByUser " , data);
         setEventCount(data.eventCount)
         
       } catch (error) {
@@ -96,7 +97,6 @@ function Profile() {
 
     <div className='w-full flex flex-col md:flex-row min-h-screen'>
 
-      {/* Sidebar */}
       <div className='w-full md:w-56 border-b md:border-b-0 md:border-r border-gray-200'>
 
         <div className='flex md:flex-col flex-row md:w-48 w-full text-gray-700 font-poppins overflow-x-auto'>
@@ -121,6 +121,11 @@ function Profile() {
             <FaUsers className="text-lg" />
           </div>
 
+          <div onClick={() =>(setTab("Following"))} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
+            <p>Following</p>
+            <FaUsers className="text-lg" />
+          </div>
+
           <div onClick={handleLogout} className='cursor-pointer hover:bg-gray-100 duration-200 md:w-full min-w-[140px] h-16 flex items-center justify-between px-4 rounded-xl'>
             <p>Logout</p>
             <FaSignOutAlt className="text-lg" />
@@ -137,6 +142,9 @@ function Profile() {
         tab === "Followers" && <Followers />
       }
       {
+        tab === "Following" && <Following />
+      }
+      {
         tab === "MyEvents" && <MyEvents /> 
       }
       {
@@ -149,7 +157,6 @@ function Profile() {
               {/* LEFT */}
               <div className='flex flex-col md:flex-row gap-10 items-center'>
 
-                {/* Profile Image */}
                 <div className='relative group'>
 
                   <div className='absolute inset-0 bg-gradient-to-r from-green-400 to-green-600 rounded-full blur-xl opacity-40 group-hover:opacity-70 duration-300'></div>
@@ -166,7 +173,6 @@ function Profile() {
 
                 </div>
 
-                {/* USER DETAILS */}
                 <div className='flex flex-col gap-7'>
 
                   {/* Name */}
@@ -182,7 +188,6 @@ function Profile() {
 
                   </div>
 
-                  {/* Stats */}
                   <div className='flex gap-4 sm:gap-6 flex-wrap justify-center md:justify-start'>
 
                     <div className='bg-white shadow-md rounded-2xl px-6 py-4 text-center min-w-[110px] hover:-translate-y-1 duration-300'>
@@ -217,7 +222,6 @@ function Profile() {
 
                   </div>
 
-                  {/* Button */}
                   <div className='flex justify-center md:justify-start'>
 
                     <button className='px-7 py-3 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold shadow-lg hover:scale-105 hover:shadow-green-300 duration-300'>
@@ -232,7 +236,6 @@ function Profile() {
 
               </div>
 
-              {/* RIGHT SIDE */}
               <div className='flex flex-col items-center xl:items-end gap-6 xl:ml-auto'>
 
                 <div className='bg-white shadow-md rounded-2xl px-6 py-4'>

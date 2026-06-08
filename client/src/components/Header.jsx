@@ -17,10 +17,10 @@ function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const currrentuser = getUser();
-  console.log("currrentuser from header" , currrentuser);
+  // console.log("currrentuser from header" , currrentuser);
 
   const handleCreateEvent = ()=>{
-    console.log("clicking handle create event");
+    // console.log("clicking handle create event");
     navigate("/create-event")
   }
 

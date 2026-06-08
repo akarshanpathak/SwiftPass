@@ -292,9 +292,25 @@ export const getFollowers = asyncHandler(async (req , res , next) =>{
     throw new ApiError(400 , "Please login to see your follower")
   }
 
-  const followers = await User.findById(userId).select("followers").populate("followers" , "name email avatar");
-  console.log("Followers " , followers);
-
+  const followers = await User.findById(userId).select("followers").populate("followers" , "name email avatar").lean();
+  
   res.status(200).json({success : true , message : "Followers found successfully" , followers})
+  
+} )
+
+export const getFollowing = asyncHandler(async (req , res , next) =>{
+  const userId = req.user._id
+
+  if(!mongoose.Types.ObjectId.isValid(userId)){
+    throw new ApiError(400 , "Invalid Id")
+  }
+
+  if(!userId){
+    throw new ApiError(400 , "Please login to see your follower")
+  }
+
+  const following = await User.findById(userId).select("following").populate("following" , "name email avatar").lean();
+  
+  res.status(200).json({success : true , message : "following found successfully" , following})
   
 } )

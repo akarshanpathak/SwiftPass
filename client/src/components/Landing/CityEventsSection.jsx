@@ -7,6 +7,7 @@ import { act } from "react";
 import { forYou, recentEvent, today } from "../../services/event.services.js";
 import RecentEvent from "../RecentEvent.jsx";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 const CityEventsSection = () => {
     const [openDialog,setOpenDialog]=useState(false);
     const [event,setEvent]=useState(null)
@@ -17,32 +18,32 @@ const CityEventsSection = () => {
     const [activeTab,setActiveTab]=useState("All")
     const navigate=useNavigate()
     const eventToDisplay=async()=>{
-      console.log("in event to display");
+      // console.log("in event to display");
       
       if(activeTab=="All"){
         const response=await recentEvent();
         setEvent(response.data.data);
-        console.log("event for all ",response.data.data);
+        // console.log("event for all ",response.data.data);
         
       }
       else if (activeTab=="For you"){
          if(city){
           const response=await forYou(city.toLowerCase());
-             console.log("event for you ",response.data.data);
+            //  console.log("event for you ",response.data.data);
              setEvent(response.data.data);
           }
       }
       else if(activeTab=="Today"){
         if(city){
           const response=await today(city.toLowerCase());
-             console.log("this weekend events",response.data.events);
+            //  console.log("this weekend events",response.data.events);
              setEvent(response.data.data);
         }
       }
       else if(activeTab == "This Weekend"){
         if(city){
             const response=await today(city.toLowerCase());
-            console.log("this weekend events",response.data.events);
+            // console.log("this weekend events",response.data.events);
             setEvent(response.data.data);
         }
       }
@@ -64,7 +65,8 @@ const CityEventsSection = () => {
     ]
     const getLocation = async () => {
       if (!navigator.geolocation) {
-        console.log("Geolocation not supported");
+        toast.error("Geolocation not supported")
+        // console.log("Geolocation not supported");
         return;
       }
 
@@ -78,7 +80,8 @@ const CityEventsSection = () => {
           }
         },
         (err) => {
-          console.log("Error fetching location:", err.message);
+          toast.error(err.message)
+          // console.log("Error fetching location:", err.message);
         }
       ); 
     };
@@ -88,7 +91,7 @@ const CityEventsSection = () => {
     },[])
     useEffect(()=>{
       if(event){
-        console.log(event);
+        // console.log(event);
       }
       eventToDisplay()
     },[activeTab,city])

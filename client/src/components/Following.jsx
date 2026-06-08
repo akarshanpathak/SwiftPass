@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getUser } from '../utils/auth';
-import { getFollowers } from '../services/user.services';
+import { getFollowing } from '../services/user.services';
 import toast from "react-hot-toast";
 import { FaUsers } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -38,22 +38,24 @@ function Avatar({ src, name, colorClass }) {
   );
 }
 
-function Followers() {
-  const [followers, setFollowers] = useState([]);
+
+
+function Following() {
+  const [following, setFollowing] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const currentUser = getUser();
-    const fetchFollower = async () => {
+    const fetchFollowing = async () => {
       try {
-        const response = await getFollowers();
-        setFollowers(response.data.followers.followers);
+        const response = await getFollowing();
+        setFollowing(response.data.following.following);
       } catch (error) {
         toast.error(error.message);
         console.log(error);
       }
     };
-    if (currentUser) fetchFollower();
+    if (currentUser) fetchFollowing();
   }, []);
 
   const handleMessage = (userId) => {
@@ -65,14 +67,14 @@ function Followers() {
 
       <div className="flex items-center gap-3 mb-8">
         <FaUsers className="text-green-500 text-2xl" />
-        <h2 className="text-2xl font-bold text-gray-800 font-poppins">Followers</h2>
+        <h2 className="text-2xl font-bold text-gray-800 font-poppins">Following</h2>
         <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full ml-1">
-          {followers.length} people
+          {following.length} people
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {followers.map((f, i) => (
+        {following.map((f, i) => (
           <div
             key={f._id}
             className="bg-white/70 backdrop-blur-xl rounded-2xl border border-white/40 shadow-md px-5 py-4 flex items-center gap-4 hover:-translate-y-1 duration-200"
@@ -99,10 +101,10 @@ function Followers() {
         ))}
       </div>
 
-      {followers.length === 0 && (
+      {following.length === 0 && (
         <div className="flex flex-col items-center justify-center mt-24 text-gray-400 gap-3">
           <FaUsers className="text-5xl text-green-200" />
-          <p className="text-sm font-medium">No followers yet</p>
+          <p className="text-sm font-medium">No Following yet</p>
         </div>
       )}
 
@@ -110,4 +112,4 @@ function Followers() {
   );
 }
 
-export default Followers;
+export default Following

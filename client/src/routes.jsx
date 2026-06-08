@@ -12,6 +12,7 @@ import Profile from './pages/Profile'
 import CreateEvent from './pages/CreateEvent'
 import Ticket from './pages/Ticket'
 import Wishlist from './components/Wishlist'
+import NotFound from './pages/NotFound'
 
 function routes() {
   return (
@@ -34,6 +35,8 @@ function routes() {
                   <Route path="/wishlist" element={<Wishlist/>}/>
                   
               </Route>
+
+              <Route path="*" element={<NotFound />} />
             </Routes>
             
       </BrowserRouter>

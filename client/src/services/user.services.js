@@ -30,3 +30,11 @@ export const totalFollowerFollowingCount = () =>{
 export const getUserWishlist = () => {
     return api.get("/user/getUserWishlist")
 }
+
+export const getFollowers = () =>{
+    return api.get("/user/getFollowers")
+}
+
+export const getFollowing = () =>{
+    return api.get("/user/getFollowing")
+}
