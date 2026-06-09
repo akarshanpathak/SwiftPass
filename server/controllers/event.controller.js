@@ -7,8 +7,7 @@ import { deleteImageFromCloudinary } from "../config/cloudinary.js";
 export const createEvent = asyncHandler(async (req, res, next) => {
   console.log("in create event server side");
   console.log("1");
-  
-  
+
   const {
     title,
     description,
@@ -22,33 +21,24 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     city,
     meetingLink,
     coordinates,
-    category
+    category,
   } = req.body;
-  console.log("2");
 
+  if (type === "OFFLINE" && (!location || !city || !coordinates)) {
+    console.log("3");
 
-  if(type === "OFFLINE" && (!location || !city || !coordinates)){
-  console.log("3");
-
-      throw new ApiError(400 , "please provide valid location")
+    throw new ApiError(400, "please provide valid location");
   }
   console.log("4");
 
-  if(type === "ONLINE" && (!platform || !meetingLink)){
-    console.log(platform , meetingLink);
-    
-    throw new ApiError(400 , "please provide valid platform and meeting link")
+  if (type === "ONLINE" && (!platform || !meetingLink)) {
+    console.log(platform, meetingLink);
+
+    throw new ApiError(400, "please provide valid platform and meeting link");
   }
   console.log("5");
 
-  if (
-    !title ||
-    !description ||
-    !startDate ||
-    !endDate ||
-    !price ||
-    !capacity 
-  ) {
+  if (!title || !description || !startDate || !endDate || !price || !capacity) {
     console.log("6");
     console.log(title);
     console.log(description);
@@ -56,13 +46,13 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     console.log(endDate);
     console.log(price);
     console.log(capacity);
-    
+
     throw new ApiError(400, "Please Provide all required feilds");
   }
   console.log("7");
 
   if (!req.file) {
-    console.log("re.file" , req.file);
+    console.log("re.file", req.file);
     console.log("3");
     throw new ApiError(400, "Banner image is required");
   }
@@ -73,7 +63,7 @@ export const createEvent = asyncHandler(async (req, res, next) => {
     console.log("3");
     throw new ApiError(400, "Price is required");
   }
-console.log("3");
+  console.log("3");
   if (price < 0) {
     console.log("3");
     throw new ApiError(400, "Price cannot be negative");
@@ -126,8 +116,8 @@ export const getAllEvent = asyncHandler(async (req, res, next) => {
   const events = await Event.find({
     status: "PUBLISHED",
     date: {
-      $gte: new Date()
-    }
+      $gte: new Date(),
+    },
   })
     .populate("organiserId", "name avatar")
     .sort({ startDate: 1 });
@@ -153,13 +143,11 @@ export const getEventById = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "Event not found");
   }
 
-  res
-    .status(200)
-    .json({
-      message: "Event fetched Successfully",
-      success: true,
-      data: event,
-    });
+  res.status(200).json({
+    message: "Event fetched Successfully",
+    success: true,
+    data: event,
+  });
 });
 
 export const getAllEventForUser = asyncHandler(async (req, res) => {
@@ -179,14 +167,12 @@ export const getAllEventForUser = asyncHandler(async (req, res) => {
     });
   }
 
-  res
-    .status(200)
-    .json({
-      message: "Event fetched Successfully",
-      Length: events.length,
-      success: true,
-      data: events,
-    });
+  res.status(200).json({
+    message: "Event fetched Successfully",
+    Length: events.length,
+    success: true,
+    data: events,
+  });
 });
 
 export const updateEventsDetail = asyncHandler(async (req, res) => {
@@ -261,13 +247,11 @@ export const updateEventsDetail = asyncHandler(async (req, res) => {
     },
   );
 
-  res
-    .status(200)
-    .json({
-      message: "Event details have been updated successfully",
-      success: true,
-      data: updatedEvent,
-    });
+  res.status(200).json({
+    message: "Event details have been updated successfully",
+    success: true,
+    data: updatedEvent,
+  });
 });
 
 export const changeEventStatus = asyncHandler(async (req, res) => {
@@ -335,14 +319,12 @@ export const getAllForLocation = asyncHandler(async (req, res, next) => {
   if (!location) {
     throw new ApiError(400, "Location is required");
   }
-  const events = await Event.find(
-    {
-      location,
-      date: {
-        $gte: new Date()
-      }
-    }
-  );
+  const events = await Event.find({
+    location,
+    date: {
+      $gte: new Date(),
+    },
+  });
   if (events.length <= 0) {
     res.status(200).json({ message: "No event found for this location" });
     return;
@@ -387,23 +369,22 @@ export const todaysEvent = asyncHandler(async (req, res, next) => {
   const events = await Event.find({
     startDate: {
       $gte: startOfDay,
-      $lte: endOfDay
-    }, city: location.toLowerCase()
-  })
+      $lte: endOfDay,
+    },
+    city: location.toLowerCase(),
+  });
 
   console.log(events);
 
   if (events.length > 0) {
-    res.status(201).json({ events, message: "Event find successfully" })
+    res.status(201).json({ events, message: "Event find successfully" });
+  } else {
+    res.status(201).json({ events, message: "No event found" });
   }
-  else {
-    res.status(201).json({ events, message: "No event found" })
-  }
-
 });
 
 export const thisWeekend = asyncHandler(async (req, res, next) => {
-  const { location } = req.query
+  const { location } = req.query;
 
   if (!location) {
     throw new ApiError(400, "Add location to fetch event");
@@ -422,55 +403,169 @@ export const thisWeekend = asyncHandler(async (req, res, next) => {
     location: { $regex: location, $options: "i" },
     date: {
       $gte: startOfWeekend,
-      $lte: endOfWeekend
-    }
-  })
-
+      $lte: endOfWeekend,
+    },
+  });
 
   if (event.length <= 0) {
-    return res.status(201).json({ message: "No event found for this location", success: true })
+    return res
+      .status(201)
+      .json({ message: "No event found for this location", success: true });
   }
 
-  res.status(201).json({ message: "Event found for this location", success: true, event })
+  res
+    .status(201)
+    .json({ message: "Event found for this location", success: true, event });
   return;
-})
+});
 // add delete Event route
 
-
 export const searchLocation = asyncHandler(async (req, res, next) => {
-  const { query } = req.query
+  const { query } = req.query;
 
   if (!query) {
-    throw new ApiError(404, "All feilds are required")
+    throw new ApiError(404, "All feilds are required");
   }
 
   const response = await fetch(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1 `,
     {
       headers: {
-        "User-Agent": "EventPlatform/1.0"
-      }
-    }
+        "User-Agent": "EventPlatform/1.0",
+      },
+    },
   );
 
   const data = await response.json();
 
   res.json(data);
-})
+});
 
-export const totalNumberOfEventOrganisedByUser = asyncHandler(async(req , res, next) =>{
-  const userId = req.user._id;
+export const totalNumberOfEventOrganisedByUser = asyncHandler(
+  async (req, res, next) => {
+    const userId = req.user._id;
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    throw new ApiError(400, "Invalid User ID format");
-  }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new ApiError(400, "Invalid User ID format");
+    }
 
-  const events = await Event.find({ organiserId: userId });
-  res
-    .status(200)
-    .json({
+    const events = await Event.find({ organiserId: userId });
+    res.status(200).json({
       message: "Event fetched Successfully",
       eventCount: events.length,
       success: true,
     });
-})
+  },
+);
+
+export const searchEvents = asyncHandler(async (req, res, next) => {
+  const {
+    q,
+    type,
+    isFree,
+    maxPrice,
+    minPrice,
+    category,
+    city,
+    organiserId,
+    today,
+    thisWeekend,
+    tomorrow,
+    specificDate,
+    sort
+  } = req.query;
+
+  let queryObj = { status: "PUBLISHED" };
+
+  if (q) {
+    queryObj.$or = [
+      { title: { $regex: q, $options: "i" } },
+      { description: { $regex: q, $options: "i" } },
+      { tags: { $in: [new RegExp(q, "i")] } }, // Fixed: "i" must be a string
+    ];
+  }
+
+  if (type && type !== "ALL") {
+    queryObj.type = type;
+  }
+
+  if (isFree === "true") {
+    queryObj.price = 0;
+  } else if (minPrice || maxPrice) {
+    queryObj.price = {};
+    if (minPrice) queryObj.price.$gte = Number(minPrice);
+    if (maxPrice) queryObj.price.$lte = Number(maxPrice);
+  }
+
+  if (category && category !== "ALL") {
+    queryObj.category = category;
+  }
+  if (city) {
+    queryObj.city = { $regex: city, $options: "i" };
+  }
+  if (organiserId) {
+    queryObj.organiserId = organiserId;
+  }
+
+  let dateQuery = {};
+
+  if (today === "true") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    dateQuery = { $gte: start, $lte: end };
+  } 
+  
+  else if (tomorrow === "true") {
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setDate(end.getDate() + 1);
+    end.setHours(23, 59, 59, 999);
+    dateQuery = { $gte: start, $lte: end };
+  } 
+  
+  else if (thisWeekend === "true") {
+    const todayDate = new Date();
+    const dayOfWeek = todayDate.getDay(); // 0 (Sun) to 6 (Sat)
+    
+    const distToFriday = (5 - dayOfWeek + 7) % 7;
+    const friday = new Date();
+    friday.setDate(todayDate.getDate() + distToFriday);
+    friday.setHours(18, 0, 0, 0); // Weekend starts Friday evening
+
+    const distToSunday = (0 - dayOfWeek + 7) % 7;
+    const sunday = new Date();
+    sunday.setDate(todayDate.getDate() + distToSunday);
+    sunday.setHours(23, 59, 59, 999);
+    
+    dateQuery = { $gte: friday, $lte: sunday };
+  } 
+  
+  else if (specificDate) {
+    const start = new Date(specificDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(specificDate);
+    end.setHours(23, 59, 59, 999);
+    dateQuery = { $gte: start, $lte: end };
+  }
+
+  if (Object.keys(dateQuery).length > 0) {
+    queryObj.startDate = dateQuery;
+  }
+
+  let sortOptions = { startDate: 1 }; // Default: Upcoming soonest
+  if (sort === "priceLow") sortOptions = { price: 1 };
+  if (sort === "priceHigh") sortOptions = { price: -1 };
+  if (sort === "newest") sortOptions = { createdAt: -1 };
+
+  const events = await Event.find(queryObj).sort(sortOptions).populate("organiserId", "name avatar");
+
+  res.status(200).json({
+    success: true,
+    count: events.length,
+    events,
+  });
+});

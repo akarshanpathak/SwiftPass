@@ -1,5 +1,5 @@
 import express from "express"
-import { changeEventStatus, createEvent, getAllEvent, getAllEventForUser, getAllForLocation, getEventById, onlineEvent, recentEvent, searchLocation, thisWeekend, todaysEvent, totalNumberOfEventOrganisedByUser, updateEventsDetail } from "../controllers/event.controller.js";
+import { changeEventStatus, createEvent, getAllEvent, getAllEventForUser, getAllForLocation, getEventById, onlineEvent, recentEvent, searchEvents, searchLocation, thisWeekend, todaysEvent, totalNumberOfEventOrganisedByUser, updateEventsDetail } from "../controllers/event.controller.js";
 import { authoriseOrganizer, protect } from "../middlewares/auth.middleware.js";
 import { upload } from "../config/cloudinary.js";
 
@@ -18,6 +18,7 @@ router.get("/todaysEvent",todaysEvent)
 router.get("/thisWeekend",thisWeekend)
 router.get("/searchLocation" , searchLocation)
 router.get("/totalNumberOfEventOrganisedByUser" ,protect , totalNumberOfEventOrganisedByUser)
+router.get("/searchEvents"  , searchEvents)
 
 
 export default router
