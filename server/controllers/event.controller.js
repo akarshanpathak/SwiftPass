@@ -472,7 +472,12 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     thisWeekend,
     tomorrow,
     specificDate,
-    sort
+    lat,
+    lng,
+    distance = 10, // Added distance in KM
+    sort,
+    page,
+    limit,
   } = req.query;
 
   let queryObj = { status: "PUBLISHED" };
@@ -481,13 +486,26 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     queryObj.$or = [
       { title: { $regex: q, $options: "i" } },
       { description: { $regex: q, $options: "i" } },
-      { tags: { $in: [new RegExp(q, "i")] } }, // Fixed: "i" must be a string
+      { tags: { $in: [new RegExp(q, "i")] } },
     ];
   }
 
-  if (type && type !== "ALL") {
-    queryObj.type = type;
+  if (lat && lng) {
+    queryObj.coordinates = {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [parseFloat(lng), parseFloat(lat)],
+        },
+        $maxDistance: distance * 1000, // Convert KM to Meters
+      },
+    };
   }
+
+  if (type && type !== "ALL") queryObj.type = type;
+  if (category && category !== "ALL") queryObj.category = category;
+  if (city) queryObj.city = { $regex: city, $options: "i" };
+  if (organiserId) queryObj.organiserId = organiserId;
 
   if (isFree === "true") {
     queryObj.price = 0;
@@ -497,27 +515,14 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     if (maxPrice) queryObj.price.$lte = Number(maxPrice);
   }
 
-  if (category && category !== "ALL") {
-    queryObj.category = category;
-  }
-  if (city) {
-    queryObj.city = { $regex: city, $options: "i" };
-  }
-  if (organiserId) {
-    queryObj.organiserId = organiserId;
-  }
-
   let dateQuery = {};
-
   if (today === "true") {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date();
     end.setHours(23, 59, 59, 999);
     dateQuery = { $gte: start, $lte: end };
-  } 
-  
-  else if (tomorrow === "true") {
+  } else if (tomorrow === "true") {
     const start = new Date();
     start.setDate(start.getDate() + 1);
     start.setHours(0, 0, 0, 0);
@@ -525,12 +530,9 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     end.setDate(end.getDate() + 1);
     end.setHours(23, 59, 59, 999);
     dateQuery = { $gte: start, $lte: end };
-  } 
-  
-  else if (thisWeekend === "true") {
+  } else if (thisWeekend === "true") {
     const todayDate = new Date();
     const dayOfWeek = todayDate.getDay(); // 0 (Sun) to 6 (Sat)
-    
     const distToFriday = (5 - dayOfWeek + 7) % 7;
     const friday = new Date();
     friday.setDate(todayDate.getDate() + distToFriday);
@@ -540,32 +542,51 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     const sunday = new Date();
     sunday.setDate(todayDate.getDate() + distToSunday);
     sunday.setHours(23, 59, 59, 999);
-    
+
     dateQuery = { $gte: friday, $lte: sunday };
-  } 
-  
-  else if (specificDate) {
+  } else if (specificDate) {
     const start = new Date(specificDate);
     start.setHours(0, 0, 0, 0);
     const end = new Date(specificDate);
     end.setHours(23, 59, 59, 999);
     dateQuery = { $gte: start, $lte: end };
+  } else {
+    dateQuery = { $gte: new Date() };
   }
+  queryObj.startDate = dateQuery;
 
-  if (Object.keys(dateQuery).length > 0) {
-    queryObj.startDate = dateQuery;
-  }
+  const pageNum = Math.abs(Number(page)) || 1;
+  let limitNum = Math.abs(Number(limit)) || 10;
+  limitNum = Math.min(limitNum, 50); 
+  const skip = (pageNum - 1) * limitNum;
 
-  let sortOptions = { startDate: 1 }; // Default: Upcoming soonest
+  let sortOptions = { startDate: 1 };
   if (sort === "priceLow") sortOptions = { price: 1 };
   if (sort === "priceHigh") sortOptions = { price: -1 };
   if (sort === "newest") sortOptions = { createdAt: -1 };
 
-  const events = await Event.find(queryObj).sort(sortOptions).populate("organiserId", "name avatar");
+  const events = await Event.find(queryObj)
+    .select(
+      "title bannerImage price startDate city type category organiserId status",
+    )
+    .sort(sortOptions)
+    .skip(skip)
+    .limit(limitNum)
+    .populate("organiserId", "name avatar");
+
+  const totalEvent = await Event.countDocuments(queryObj);
+  const totalPages = Math.ceil(totalEvent / limitNum);
 
   res.status(200).json({
     success: true,
-    count: events.length,
+    results: events.length,
+    pagination: {
+      totalEvent,
+      totalPages,
+      currentPage: pageNum,
+      hasNextPage: pageNum < totalPages,
+      hasPrevPage: pageNum > 1,
+    },
     events,
   });
 });
