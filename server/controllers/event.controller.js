@@ -471,10 +471,7 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     today,
     thisWeekend,
     tomorrow,
-    specificDate,
-    lat,
-    lng,
-    distance = 10, // Added distance in KM
+    specificDate, // Added distance in KM
     sort,
     page,
     limit,
@@ -490,80 +487,111 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     ];
   }
 
-  if (lat && lng) {
-    queryObj.coordinates = {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [parseFloat(lng), parseFloat(lat)],
-        },
-        $maxDistance: distance * 1000, // Convert KM to Meters
-      },
-    };
-  }
-
   if (type && type !== "ALL") queryObj.type = type;
+
   if (category && category !== "ALL") queryObj.category = category;
+
   if (city) queryObj.city = { $regex: city, $options: "i" };
+
   if (organiserId) queryObj.organiserId = organiserId;
 
   if (isFree === "true") {
+    
     queryObj.price = 0;
+
   } else if (minPrice || maxPrice) {
     queryObj.price = {};
+
     if (minPrice) queryObj.price.$gte = Number(minPrice);
+
     if (maxPrice) queryObj.price.$lte = Number(maxPrice);
   }
 
   let dateQuery = {};
+
   if (today === "true") {
+
     const start = new Date();
+
     start.setHours(0, 0, 0, 0);
+
     const end = new Date();
+
     end.setHours(23, 59, 59, 999);
+    
     dateQuery = { $gte: start, $lte: end };
+
   } else if (tomorrow === "true") {
     const start = new Date();
+
     start.setDate(start.getDate() + 1);
+
     start.setHours(0, 0, 0, 0);
+
     const end = new Date();
+
     end.setDate(end.getDate() + 1);
+
     end.setHours(23, 59, 59, 999);
+
     dateQuery = { $gte: start, $lte: end };
+
   } else if (thisWeekend === "true") {
     const todayDate = new Date();
+
     const dayOfWeek = todayDate.getDay(); // 0 (Sun) to 6 (Sat)
+
     const distToFriday = (5 - dayOfWeek + 7) % 7;
+
     const friday = new Date();
+
     friday.setDate(todayDate.getDate() + distToFriday);
+
     friday.setHours(18, 0, 0, 0); // Weekend starts Friday evening
 
     const distToSunday = (0 - dayOfWeek + 7) % 7;
+
     const sunday = new Date();
+
     sunday.setDate(todayDate.getDate() + distToSunday);
+
     sunday.setHours(23, 59, 59, 999);
 
     dateQuery = { $gte: friday, $lte: sunday };
   } else if (specificDate) {
+
     const start = new Date(specificDate);
+
     start.setHours(0, 0, 0, 0);
+
     const end = new Date(specificDate);
+
     end.setHours(23, 59, 59, 999);
+
     dateQuery = { $gte: start, $lte: end };
+
   } else {
+
     dateQuery = { $gte: new Date() };
+    
   }
   queryObj.startDate = dateQuery;
 
   const pageNum = Math.abs(Number(page)) || 1;
+
   let limitNum = Math.abs(Number(limit)) || 10;
+
   limitNum = Math.min(limitNum, 50); 
+
   const skip = (pageNum - 1) * limitNum;
 
   let sortOptions = { startDate: 1 };
   if (sort === "priceLow") sortOptions = { price: 1 };
+
   if (sort === "priceHigh") sortOptions = { price: -1 };
+
   if (sort === "newest") sortOptions = { createdAt: -1 };
+
 
   const events = await Event.find(queryObj)
     .select(
@@ -572,7 +600,8 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     .sort(sortOptions)
     .skip(skip)
     .limit(limitNum)
-    .populate("organiserId", "name avatar");
+    .populate("organiserId", "name avatar")
+    .lean();
 
   const totalEvent = await Event.countDocuments(queryObj);
   const totalPages = Math.ceil(totalEvent / limitNum);
