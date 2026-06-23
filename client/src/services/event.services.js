@@ -86,3 +86,7 @@ export const getAllEventForUser = () =>{
     return api.get("/event/getAllEventForUser")
 }
 
+export const fetchAllEvent = (query) =>{
+     return api.get(`/event/searchEvents?${query}`)
+}
+

@@ -18,7 +18,7 @@ import MyEvents from '../components/MyEvents';
 import Tickets from '../components/Tickets';
 import { useDispatch } from 'react-redux';
 import { logOutUser } from '../redux/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { totalFollowerFollowingCount } from '../services/user.services';
 import { useEffect } from 'react';
 import { totalNumberOfEventOrganisedByUser } from '../services/event.services';
@@ -27,9 +27,9 @@ import Following from '../components/Following';
 
 
 function Profile() {
-
+  const location = useLocation()
   const currrentuser = getUser();
-  const [tab, setTab] = useState("profile");
+  const [tab, setTab] = useState(location.state?.tab ||  "profile");
   const [followerCount , setFollowerCount] = useState(0);
   const [followingCount , setFollowingCount] = useState(0);
   const [eventCount , setEventCount] = useState(0);

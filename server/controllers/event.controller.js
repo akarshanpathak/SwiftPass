@@ -471,7 +471,7 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     today,
     thisWeekend,
     tomorrow,
-    specificDate, // Added distance in KM
+    specificDate,
     sort,
     page,
     limit,
@@ -570,10 +570,9 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
 
     dateQuery = { $gte: start, $lte: end };
 
-  } else {
-
+  }
+  else {
     dateQuery = { $gte: new Date() };
-    
   }
   queryObj.startDate = dateQuery;
 
@@ -601,8 +600,8 @@ export const searchEvents = asyncHandler(async (req, res, next) => {
     .skip(skip)
     .limit(limitNum)
     .populate("organiserId", "name avatar")
-    .lean();
-
+  
+  
   const totalEvent = await Event.countDocuments(queryObj);
   const totalPages = Math.ceil(totalEvent / limitNum);
 

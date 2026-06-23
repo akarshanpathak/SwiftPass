@@ -57,7 +57,7 @@ export const getCurrentLocation = asyncHandler(async (req, res, next) => {
   })
 
   const data = await response.json();
-  console.log(data);
+  // console.log(data);
   res.json(data);
 
 })

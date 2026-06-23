@@ -2,7 +2,6 @@ import  jwt  from "jsonwebtoken"
 import {User} from "../models/user.schema.js"
 
 export const protect=async (req,res,next)=>{
-    console.log("in protect server side");
     
     try {
         const token=req.cookies["access-token"];

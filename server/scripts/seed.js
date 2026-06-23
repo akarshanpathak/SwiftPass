@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker';
 import { Event } from '../models/event.schema.js'; // Adjusted path
 import { User } from '../models/user.schema.js';   // Adjusted path
+import { Ticket } from '../models/ticket.schema.js'
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +27,7 @@ const seedDB = async () => {
         // 1. DELETE OLD DATA
         await User.deleteMany({});
         await Event.deleteMany({});
+        await Ticket.deleteMany({});
         console.log("🧹 Old data cleared.");
 
         // 2. CREATE USERS
@@ -46,9 +48,9 @@ const seedDB = async () => {
         const eventImages = [
             "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800",
             "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800",
-            "https://images.unsplash.com/photo-1540575861501-7ad060e39fe1?w=800",
+            "https://images.unsplash.com/photo-1558008258-3256797b43f3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzB8fGV2ZW50fGVufDB8fDB8fHww",
             "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800",
-            "https://images.unsplash.com/photo-1514525253361-bee8a19740c1?w=800"
+            "https://images.unsplash.com/photo-1560439514-4e9645039924?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
         ];
 
         const events = [];

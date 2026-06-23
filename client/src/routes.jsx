@@ -13,6 +13,7 @@ import CreateEvent from './pages/CreateEvent'
 import Ticket from './pages/Ticket'
 import Wishlist from './components/Wishlist'
 import NotFound from './pages/NotFound'
+import SearchEvent from './pages/SearchEvent'
 
 function routes() {
   return (
@@ -33,6 +34,7 @@ function routes() {
                   <Route path="/create-event" element={<CreateEvent/>}/>
                   <Route path="/ticket" element={<Ticket/>}/>
                   <Route path="/wishlist" element={<Wishlist/>}/>
+                  <Route path="/searchEvent" element={<SearchEvent/>}/>
                   
               </Route>
 
