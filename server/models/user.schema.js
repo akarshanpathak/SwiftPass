@@ -45,7 +45,13 @@ const userSchema = new Schema({
             ref: "User"
         }],
         default: []
-    }
+    },
+    isVerified:{
+        type: Boolean,
+        default : false
+    },
+    verifyToken : String,
+    verifyToeknExpiry : Date
 
 },
     {

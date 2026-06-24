@@ -8,7 +8,7 @@ export const getAllticketOfuser = asyncHandler(async (req , res , next) =>{
 
     const userTickets = await Ticket.find({attendee : userId}).populate("event")
 
-    console.log(userTickets.length);
+    // console.log(userTickets.length);
 
     if(userTickets.length === 0){
         return res.status(200).json({message : "No Ticket found" , success : true , userTickets : []})
