@@ -14,6 +14,7 @@ import Ticket from './pages/Ticket'
 import Wishlist from './components/Wishlist'
 import NotFound from './pages/NotFound'
 import SearchEvent from './pages/SearchEvent'
+import VerifyEmail from "./pages/VerifyEmail"
 
 function routes() {
   return (
@@ -23,6 +24,7 @@ function routes() {
               <Route element={<AuthLayout/>}>
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
+                <Route path="/verifyEmail/:token" element={<VerifyEmail />} />
               </Route>
             
               <Route element={<MainLayout/>}>

@@ -38,3 +38,12 @@ export const getFollowers = () =>{
 export const getFollowing = () =>{
     return api.get("/user/getFollowing")
 }
+
+export const verifyEmail = (token) =>{
+    return api.get(`/user/verifyEmail/${token}`)
+}
+
+export const resendVerificationEmail = (email) =>{
+    // console.log("email from resendVerificationEmail " , email)
+    return api.post("/user/resendVerification" , {email})
+}

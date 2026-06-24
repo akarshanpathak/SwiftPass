@@ -4,6 +4,8 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { User } from "../models/user.schema.js";
 import { Event } from "../models/event.schema.js";
+import crypto from "crypto";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -21,12 +23,12 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res, next) => {
-  console.log("printing req.body ", req.body);
+  // console.log("printing req.body ", req.body);
 
   const { email, password } = req.body;
 
   if (!email || !password) {
-    console.log("All feilds are Required");
+    // console.log("All feilds are Required");
     throw new ApiError(401, "All feilds are required");
   }
 
@@ -43,33 +45,34 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     .json({ message: "Login Successfull", user, success: true });
 });
 
-
 export const getCurrentLocation = asyncHandler(async (req, res, next) => {
-  const { lng, lat } = req.query
+  const { lng, lat } = req.query;
   if (!lng || !lat) {
-    throw new ApiError(400, "All feilds are required")
+    throw new ApiError(400, "All feilds are required");
   }
 
-  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
-    headers: {
-      "User-Agent": "swiftpass(swiftpass@gmail.com)"
-    }
-  })
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+    {
+      headers: {
+        "User-Agent": "swiftpass(swiftpass@gmail.com)",
+      },
+    },
+  );
 
   const data = await response.json();
   // console.log(data);
   res.json(data);
-
-})
+});
 
 export const updateWishlist = asyncHandler(async (req, res, next) => {
-  const { eventId } = req.params
+  const { eventId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
-    throw new ApiError(404, "Please provide valid event id")
+    throw new ApiError(404, "Please provide valid event id");
   }
 
-  const event = await Event.findById(eventId)
+  const event = await Event.findById(eventId);
 
   if (!event) {
     throw new ApiError(404, "Event not found");
@@ -77,10 +80,10 @@ export const updateWishlist = asyncHandler(async (req, res, next) => {
 
   const user = await User.findById(req.user._id);
 
-  const alreadyExist = user.wishlist.some((id) => id.toString() === eventId)
+  const alreadyExist = user.wishlist.some((id) => id.toString() === eventId);
 
   if (alreadyExist) {
-    user.wishlist = user.wishlist.filter((id) => id.toString() !== eventId)
+    user.wishlist = user.wishlist.filter((id) => id.toString() !== eventId);
 
     await user.save();
 
@@ -100,10 +103,9 @@ export const updateWishlist = asyncHandler(async (req, res, next) => {
     message: "Event added to wishlist",
     wishlist: user.wishlist,
   });
-})
+});
 
 export const updateFollowers = asyncHandler(async (req, res, next) => {
-
   const { userId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -119,13 +121,12 @@ export const updateFollowers = asyncHandler(async (req, res, next) => {
   const addUser = req.user._id;
 
   const alreadyFollows = userExist.followers.some(
-    (id) => id.toString() === addUser.toString()
+    (id) => id.toString() === addUser.toString(),
   );
 
   if (alreadyFollows) {
-
     userExist.followers = userExist.followers.filter(
-      (id) => id.toString() !== addUser.toString()
+      (id) => id.toString() !== addUser.toString(),
     );
 
     await userExist.save();
@@ -146,11 +147,9 @@ export const updateFollowers = asyncHandler(async (req, res, next) => {
     message: "follower Added successfully",
     followers: userExist.followers,
   });
-
 });
 
 export const updateFollowing = asyncHandler(async (req, res, next) => {
-
   const { userId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -166,13 +165,12 @@ export const updateFollowing = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user._id);
 
   const alreadyFollows = user.following.some(
-    (id) => id.toString() === userId.toString()
+    (id) => id.toString() === userId.toString(),
   );
 
   if (alreadyFollows) {
-
     user.following = user.following.filter(
-      (id) => id.toString() !== userId.toString()
+      (id) => id.toString() !== userId.toString(),
     );
 
     await user.save();
@@ -193,7 +191,6 @@ export const updateFollowing = asyncHandler(async (req, res, next) => {
     message: "following updated successfully",
     following: user.following,
   });
-
 });
 
 export const isFollowing = asyncHandler(async (req, res, next) => {
@@ -208,7 +205,7 @@ export const isFollowing = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "User does not exist");
   }
 
-  const user = req.user || await User.findById(req.user?._id);
+  const user = req.user || (await User.findById(req.user?._id));
   if (!user) {
     throw new ApiError(401, "User not authorized"); // Changed to 401 (Unauthorized)
   }
@@ -242,7 +239,7 @@ export const isInWishList = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "Event not found");
   }
 
-  const user = req.user || await User.findById(req.user?._id);
+  const user = req.user || (await User.findById(req.user?._id));
   if (!user) {
     throw new ApiError(401, "User not authorized");
   }
@@ -264,53 +261,150 @@ export const isInWishList = asyncHandler(async (req, res, next) => {
   });
 });
 
-export const totalFollowerFollowingCount = asyncHandler (async (req , res , next) =>{
-  const user = req.user
-  // console.log(user );
-  res.json({success : true , message :"fetched successfully" ,followersCount : user.followers.length , followingCount : user.following.length})
-})
+export const totalFollowerFollowingCount = asyncHandler(
+  async (req, res, next) => {
+    const user = req.user;
+    // console.log(user );
+    res.json({
+      success: true,
+      message: "fetched successfully",
+      followersCount: user.followers.length,
+      followingCount: user.following.length,
+    });
+  },
+);
 
-export const getUserWishlist = asyncHandler(async (req , res , next) =>{
-    const userId = req.user._id 
+export const getUserWishlist = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
 
-    const eventInUserWishlist = await User.findById(userId).populate("wishlist")
+  const eventInUserWishlist = await User.findById(userId).populate("wishlist");
 
-    // console.log("eventInUserWishlist " , eventInUserWishlist.wishlist);
+  // console.log("eventInUserWishlist " , eventInUserWishlist.wishlist);
 
-    res.status(200).json({success : true , message : "wishlist found successfully" , wishlist:eventInUserWishlist.wishlist})
-    
-})
+  res.status(200).json({
+    success: true,
+    message: "wishlist found successfully",
+    wishlist: eventInUserWishlist.wishlist,
+  });
+});
 
-export const getFollowers = asyncHandler(async (req , res , next) =>{
-  const userId = req.user._id
+export const getFollowers = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
 
-  if(!mongoose.Types.ObjectId.isValid(userId)){
-    throw new ApiError(400 , "Invalid Id")
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid Id");
   }
 
-  if(!userId){
-    throw new ApiError(400 , "Please login to see your follower")
+  if (!userId) {
+    throw new ApiError(400, "Please login to see your follower");
   }
 
-  const followers = await User.findById(userId).select("followers").populate("followers" , "name email avatar").lean();
-  
-  res.status(200).json({success : true , message : "Followers found successfully" , followers})
-  
-} )
+  const followers = await User.findById(userId)
+    .select("followers")
+    .populate("followers", "name email avatar")
+    .lean();
 
-export const getFollowing = asyncHandler(async (req , res , next) =>{
-  const userId = req.user._id
+  res.status(200).json({
+    success: true,
+    message: "Followers found successfully",
+    followers,
+  });
+});
 
-  if(!mongoose.Types.ObjectId.isValid(userId)){
-    throw new ApiError(400 , "Invalid Id")
+export const getFollowing = asyncHandler(async (req, res, next) => {
+  const userId = req.user._id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid Id");
   }
 
-  if(!userId){
-    throw new ApiError(400 , "Please login to see your follower")
+  if (!userId) {
+    throw new ApiError(400, "Please login to see your follower");
   }
 
-  const following = await User.findById(userId).select("following").populate("following" , "name email avatar").lean();
-  
-  res.status(200).json({success : true , message : "following found successfully" , following})
-  
-} )
+  const following = await User.findById(userId)
+    .select("following")
+    .populate("following", "name email avatar")
+    .lean();
+
+  res.status(200).json({
+    success: true,
+    message: "following found successfully",
+    following,
+  });
+});
+
+export const verifyEmail = asyncHandler(async (req, res, next) => {
+  const { token } = req.params;
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    verifyToken: hashedToken,
+    verifyTokenExpiry: {
+      $gt: Date.now(),
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "Token is invalid or has expired.");
+  }
+
+  user.isVerified = true;
+  user.verifyToken = undefined;
+  user.verifyTokenExpiry = undefined;
+
+  await user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Email verified successfully!" });
+});
+
+export const resendVerification = asyncHandler(async (req, res, next) => {
+
+  // console.log("printing req body from resendVerification " , req.body)
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Please provide valid email");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new ApiError(400, "Please provide valid email");
+  }
+
+  if (user.isVerified) {
+    return res.status(400).json({ message: "Already verified" });
+  }
+
+  const unhashedToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(unhashedToken)
+    .digest("hex");
+
+  user.verifyToken = hashedToken;
+  user.verifyTokenExpiry = Date.now() + 24 * 60 * 60 * 1000;
+
+  const verifyUrl = `${process.env.FRONTEND_URL}/verifyEmail/${unhashedToken}`;
+
+  await sendEmail({
+    email: email,
+    subject: "Verify your SwiftPass Account",
+    html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
+                    <h2 style="color: #07A320;">Welcome to SwiftPass!</h2>
+                    <p>Hi ${user.name}, please verify your email to start booking and hosting events.</p>
+                    <a href="${verifyUrl}" style="background: #07A320; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email Address</a>
+                    <p style="margin-top: 20px; font-size: 12px; color: #666;">This link expires in 24 hours.</p>
+                </div>
+            `,
+  });
+
+  await user.save();
+
+  res.status(200).json({ success: true, message: "New verification link sent!" });
+});
