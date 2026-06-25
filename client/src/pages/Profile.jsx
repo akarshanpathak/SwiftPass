@@ -19,11 +19,12 @@ import Tickets from '../components/Tickets';
 import { useDispatch } from 'react-redux';
 import { logOutUser } from '../redux/userSlice';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { totalFollowerFollowingCount } from '../services/user.services';
+import { logout, totalFollowerFollowingCount  } from '../services/user.services';
 import { useEffect } from 'react';
 import { totalNumberOfEventOrganisedByUser } from '../services/event.services';
 import Wishlist from '../components/Wishlist';
 import Following from '../components/Following';
+import toast from 'react-hot-toast';
 
 
 function Profile() {
@@ -87,9 +88,20 @@ function Profile() {
     }
   } , [currrentuser])
 
-  const handleLogout = () =>{
-    dispatch(logOutUser())
-    navigate("/")
+  const handleLogout = async () =>{
+    try {
+      const res = await logout()
+
+      if(res.data.success){
+        dispatch(logOutUser())
+        navigate("/")
+      }
+      
+    } catch (error) {
+      toast.error(error.message)
+      console.error(error)
+    }
+    
   }
 
 

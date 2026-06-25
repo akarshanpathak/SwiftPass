@@ -6,6 +6,10 @@ import { User } from "../models/user.schema.js";
 import { Event } from "../models/event.schema.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
+
+dotenv.config();
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -23,26 +27,40 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res, next) => {
-  // console.log("printing req.body ", req.body);
-
   const { email, password } = req.body;
 
   if (!email || !password) {
-    // console.log("All feilds are Required");
-    throw new ApiError(401, "All feilds are required");
+    throw new ApiError(400, "Email and password are required");
   }
 
-  const user = await login(email, password);
+  const { user, token } = await login(email, password);
 
-  return res
-    .cookie("access-token", user.token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Days
-    })
-    .status(201)
-    .json({ message: "Login Successfull", user, success: true });
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  return res.status(200).cookie("accessToken", token, cookieOptions).json({
+    success: true,
+    message: "Login Successful",
+    user,
+    token,
+  });
+});
+
+export const logOutUser = asyncHandler(async (req, res, next) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "lax",
+  };
+  console.log("logout successfull");
+  res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .json({ success: true, message: "User logged out successfully" });
 });
 
 export const getCurrentLocation = asyncHandler(async (req, res, next) => {
@@ -362,7 +380,6 @@ export const verifyEmail = asyncHandler(async (req, res, next) => {
 });
 
 export const resendVerification = asyncHandler(async (req, res, next) => {
-
   // console.log("printing req body from resendVerification " , req.body)
   const { email } = req.body;
 
@@ -406,5 +423,96 @@ export const resendVerification = asyncHandler(async (req, res, next) => {
 
   await user.save();
 
-  res.status(200).json({ success: true, message: "New verification link sent!" });
+  res
+    .status(200)
+    .json({ success: true, message: "New verification link sent!" });
+});
+
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ApiError(400, "Please provide an email");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists, an OTP has been sent.",
+    });
+  }
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+
+  user.forgotPasswordOTP = hashedOTP;
+
+  user.forgotPasswordOTPExpiry = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+  const html = `
+        <div style="font-family: sans-serif; text-align: center; padding: 20px;">
+            <h1>Password Reset OTP</h1>
+            <p>Your one-time password for resetting your SwiftPass account is:</p>
+            <h2 style="background: #07A320; padding: 10px; display: inline-block; letter-spacing: 5px;">${otp}</h2>
+            <p>This code expires in 10 minutes. Do not share this code with anyone.</p>
+        </div>
+    `;
+
+  try {
+
+    await sendEmail({
+      email: user.email,
+      subject: "Your Password Reset OTP",
+      html,
+    });
+
+    res.status(200).json({ success: true, message: "OTP sent to your email." });
+  } catch (err) {
+
+    user.forgotPasswordOTP = undefined;
+
+    user.forgotPasswordOTPExpiry = undefined;
+
+    await user.save();
+
+    throw new ApiError(400, "Failed to send OTP email");
+  }
+});
+
+export const resetPasswordWithOTP = asyncHandler(async (req, res, next) => {
+  const { email, password, otp } = req.body;
+
+  if (!email || !password || !otp) {
+    throw new ApiError(400, "All feilds are required");
+  }
+
+  const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+  const user = await User.findOne({
+    email,
+    forgotPasswordOTP: hashedOtp,
+    forgotPasswordOTPExpiry: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid OTP or OTP has expired" });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  user.password = hashedPassword; // Ensure .pre("save") hashes this!
+  user.forgotPasswordOTP = undefined;
+  user.forgotPasswordOTPExpiry = undefined;
+  await user.save();
+
+  res
+    .status(200)
+    .json({ success: true, message: "Password updated! You can now login." });
 });

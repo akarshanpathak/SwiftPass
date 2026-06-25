@@ -18,14 +18,11 @@ const slice=createSlice({
             state.currentUser=null
         },
         loginInSuccessFull:(state,action)=>{
+            // console.log("in loginsuccessful " , action.payload)
             setUser(action.payload.user,action.payload.token)
-            // console.log("sign in successfull");
-            console.log("action",action);
-            // console.log(action.token);
-            state.currentUser=getUser()
+            state.currentUser=action.payload.user
             state.loading=false;
             state.error=null
-            console.log(action.payload);
         },
         loginInFailed:(state,actions)=>{
             console.log("Sign in failed");
@@ -34,11 +31,12 @@ const slice=createSlice({
             state.currentUser=null
         },
         logOutUser:(state,action)=>{
-            console.log("Log out start");
+            // console.log("Log out start");
             state.currentUser=null
             state.error=null
             state.loading=false
             logout()
+            // console.log("Log out successfull");
         },
         setCurrentLocation:(state,action)=>{
             state.currentLocation=action.payload

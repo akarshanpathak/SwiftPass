@@ -31,8 +31,8 @@ function Login() {
       console.log("in login page")
       dispatch(loginInstart());
       const res = await loginUser(formData);
-      
-      dispatch(loginInSuccessFull(res.data.user));
+      // console.log( "after login", res.data)
+      dispatch(loginInSuccessFull(res.data));
       toast.success(res.data.message || "Login Successful");
       navigate("/");
     } catch (error) {
@@ -100,6 +100,10 @@ function Login() {
                     type="password"
                     placeholder="••••••••"
                   />
+                </div>
+
+                <div className="relative flex justify-end">
+                  <span onClick={()=>(navigate("/ForgotPassword"))} className="text-xs absolute bottom-0 text-blue-500 cursor-pointer hover:text-blue-700">Forgotten password</span>
                 </div>
 
                 <div className="flex flex-col gap-3">

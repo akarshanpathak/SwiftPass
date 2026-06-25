@@ -19,9 +19,7 @@ function CreateEvent() {
     const currentUser = getUser();
     const navigate = useNavigate()
 
-    if (!currentUser) {
-        return null;
-    }
+
 
     const categories = [
         {
@@ -730,7 +728,8 @@ function CreateEvent() {
 
         <div className='w-full min-h-screen bg-gray-100 py-10 px-4'>
 
-            <div className='max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-8'>
+           {
+            currentUser && <div className='max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-8'>
 
                 {/* Heading */}
 
@@ -1766,6 +1765,14 @@ function CreateEvent() {
                     </button>
                 </div>
             </div>
+           }
+           {
+             !currentUser && 
+              <div className='flex flex-col gap-4  h-screen items-center justify-center '>
+                    <span className='text-xl  font-poppins text-gray-700'>Login first to create an event </span>
+                    <button className='bg-green-600 hover:bg-green-500 text-white py-2 px-6 text-lg font-bold rounded-lg' onClick={()=>(navigate("/login"))}>Login</button>
+              </div>
+           }
 
         </div>
     )

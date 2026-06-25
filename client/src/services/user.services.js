@@ -47,3 +47,15 @@ export const resendVerificationEmail = (email) =>{
     // console.log("email from resendVerificationEmail " , email)
     return api.post("/user/resendVerification" , {email})
 }
+
+export const logout = () =>{
+    return api.post("/user/logout")
+}
+
+export const sendOtp = (email) =>{
+    return api.post("/user/forgotPassword" , {email})
+}
+
+export const resetPassword = (email , password , otp) =>{
+    return api.post("/user/resetPasswordWithOTP" , {email , password , otp})
+}

@@ -57,30 +57,29 @@ export const register = async (name, email, password) => {
 };
 
 export const login = async (email, password) => {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password"); 
 
     if (!user) {
         throw new ApiError(404, "User doesn't exist");
     }
     
     if (!user.isVerified) {
-        throw new ApiError(404, "Your email is not verified. Please verify your account to login." );
+        throw new ApiError(401, "Your email is not verified. Please verify your account to login.");
     }
 
-    const verify = await bcryptjs.compare(password, user.password);
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
 
-    if (!verify) {
-        throw new ApiError(401, "Email and Password doesn't match");
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid credentials");
     }
 
     const token = jwt.sign(
         { id: user._id, role: user.role },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
     );
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    const userResponse = await User.findById(user._id).select("-password -verifyToken -verifyTokenExpiry");
 
     return { user: userResponse, token };
 };

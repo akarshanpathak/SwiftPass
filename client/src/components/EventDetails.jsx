@@ -18,6 +18,7 @@ import { getEventById } from "../services/event.services";
 import { createOrder, verifyPayment } from "../services/payment.services";
 import { getUser } from "../utils/auth";
 import { isFollowing, isInWishList, updateFollowers, updateFollowing , updateWishlist } from "../services/user.services";
+import { useSelector } from "react-redux";
 
 function EventDetails() {
   const { id } = useParams();
@@ -33,8 +34,6 @@ function EventDetails() {
   const [eventId, setEventId] = useState(null)
 
   const user = getUser();
-
-
 
   // FETCH EVENT 
   useEffect(() => {
@@ -70,7 +69,7 @@ function EventDetails() {
         const response = await isInWishList(eventId)
         setLiked(response.data.inWishlist)
       } catch (error) {
-        console.log("error from is in Wishlist useeffect", error);
+        console.log( error);
       }
     }
 
@@ -222,12 +221,13 @@ function EventDetails() {
       const responseFollower = await updateFollowers(organiserId);
       const responseFollowing = await updateFollowing(organiserId)
       
-      console.log(responseFollower);
-      console.log(responseFollowing);
       
       setFollows((prev) => !prev)
     } catch (error) {
       console.log("Error from handleFollowerFollowing " , error);
+      if(error.response?.data?.message === "Not Authorised,No token"){
+        toast.error("Login to start following")
+      }
       
     }
   }
@@ -255,7 +255,9 @@ function EventDetails() {
               <Share2 size={16} />
             </button>
 
-            <button
+            {
+              user && 
+              <button
               onClick={() => {
                 setLiked(!liked);
                 handleWishlist(data._id);
@@ -271,6 +273,7 @@ function EventDetails() {
                 className={liked ? "text-white hover:scale-125 duration-150" : "text-black hover:scale-125 duration-150"}
               />
             </button>
+            }
           </div>
 
           {/* HERO CONTENT */}

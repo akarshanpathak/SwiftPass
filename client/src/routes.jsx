@@ -15,6 +15,7 @@ import Wishlist from './components/Wishlist'
 import NotFound from './pages/NotFound'
 import SearchEvent from './pages/SearchEvent'
 import VerifyEmail from "./pages/VerifyEmail"
+import ForgotPassword from './pages/ForgotPassword'
 
 function routes() {
   return (
@@ -25,6 +26,7 @@ function routes() {
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register/>}/>
                 <Route path="/verifyEmail/:token" element={<VerifyEmail />} />
+                <Route path="/ForgotPassword" element={<ForgotPassword />} />
               </Route>
             
               <Route element={<MainLayout/>}>

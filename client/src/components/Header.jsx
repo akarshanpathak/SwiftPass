@@ -100,13 +100,19 @@ function Header() {
                 icon={<Heart size={20} />}
                 label="Wishlist"
               />
-              <Action onClick={()=>{
-                navigate("/profile" ,{
-                  state:{
-                    tab : "Tickets"
-                  }
-                })
-              }} icon={<TicketSlash size={20} />} label="Tickets" />
+              {currrentuser && (
+                <Action
+                  onClick={() => {
+                    navigate("/profile", {
+                      state: {
+                        tab: "Tickets",
+                      },
+                    });
+                  }}
+                  icon={<TicketSlash size={20} />}
+                  label="Tickets"
+                />
+              )}
             </nav>
 
             {/* Desktop User - Visible from lg up */}
@@ -183,7 +189,7 @@ function Header() {
               icon={<Heart />}
               label="Wishlist"
             />
-            <MobileNavItem icon={<TicketSlash />} label="My Tickets" />
+            {currrentuser && <MobileNavItem icon={<TicketSlash />} label="My Tickets" />}
             <div className="h-px bg-gray-100 my-2" />
             <div
               onClick={() => navigate("/profile")}

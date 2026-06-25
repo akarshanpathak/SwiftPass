@@ -1,20 +1,22 @@
 import  jwt  from "jsonwebtoken"
 import {User} from "../models/user.schema.js"
+import ApiError from "../utils/ApiError.js";
 
 export const protect=async (req,res,next)=>{
     
     try {
-        const token=req.cookies["access-token"];
+        const token=req.cookies["accessToken"];
     
         if(!token){
-            return res.status(401).json({message:"Not Authorised,No token",success:false})
+            // console.log("not fouind")/
+            // return res.status(401).json({message:,success:false})
+            throw new ApiError(401 , "Not Authorised,No token")
         }
     
         const decoded=jwt.verify(token,process.env.JWT_SECRET);
     
         const user=await User.findById(decoded.id).select("-password")
         req.user=user
-
         next();
     } catch (error) {
         console.log("Authorisation failed protect: ",error);

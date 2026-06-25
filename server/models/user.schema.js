@@ -1,67 +1,73 @@
 import mongoose, { Schema } from "mongoose";
 
-const userSchema = new Schema({
+const userSchema = new Schema(
+  {
     name: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     email: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
     password: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     role: {
-        type: String,
-        enum: ["admin", "organizer", "attendee"],
-        default: "organizer"
+      type: String,
+      enum: ["admin", "organizer", "attendee"],
+      default: "organizer",
     },
     avatar: {
-        type: String,
-        default: "https://img.magnific.com/free-vector/blue-circle-with-white-user_78370-4707.jpg",
+      type: String,
+      default:
+        "https://img.magnific.com/free-vector/blue-circle-with-white-user_78370-4707.jpg",
     },
     wishlist: {
-        type: [{
-            type: Schema.Types.ObjectId,
-            ref: "Event"
-        }],
-        default: []
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Event",
+        },
+      ],
+      default: [],
     },
     followers: {
-        type: [{
-            type: Schema.Types.ObjectId,
-            ref: "User"
-        }],
-        default: []
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
     },
     following: {
-        type: [{
-            type: Schema.Types.ObjectId,
-            ref: "User"
-        }],
-        default: []
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
     },
-    isVerified:{
-        type: Boolean,
-        default : false
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
-    verifyToken : String,
-    verifyTokenExpiry : Date
+    verifyToken: String,
+    verifyTokenExpiry: Date,
+    forgotPasswordOTP: String,
+    forgotPasswordOTPExpiry: Date,
+  },
+  {
+    timestamps: true,
+  },
+);
 
-},
-    {
-        timestamps: true
-    }
-)
+const User = mongoose.model("User", userSchema);
 
-const User = mongoose.model("User", userSchema)
-
-export { User }
-
-
-
+export { User };
